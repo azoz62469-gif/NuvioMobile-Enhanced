@@ -878,10 +878,10 @@ index 0000000..25e4f3f
 +}
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
 new file mode 100644
-index 0000000..931d8bd
+index 0000000..d44b863
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
-@@ -0,0 +1,515 @@
+@@ -0,0 +1,517 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.core.ui.NuvioToastController
@@ -893,6 +893,7 @@ index 0000000..931d8bd
 +import com.nuvio.app.features.player.SubtitleLanguageMatching
 +import com.nuvio.app.features.player.SubtitleSyncCue
 +import com.nuvio.app.features.player.sanitizePlaybackHeaders
++import kotlinx.cinterop.ExperimentalForeignApi
 +import kotlinx.coroutines.CancellationException
 +import kotlinx.coroutines.CoroutineScope
 +import kotlinx.coroutines.Dispatchers
@@ -1315,6 +1316,7 @@ index 0000000..931d8bd
 +        }.filter { it.cues.size >= MIN_REFERENCE_CUES }
 +    }
 +
++    @OptIn(ExperimentalForeignApi::class)
 +    private fun writeRetimedSubtitle(text: String): String? {
 +        val directory = NSTemporaryDirectory().trimEnd('/') + "/nuvio-autosync"
 +        val created = NSFileManager.defaultManager.createDirectoryAtPath(
