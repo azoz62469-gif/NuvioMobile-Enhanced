@@ -878,10 +878,10 @@ index 0000000..25e4f3f
 +}
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
 new file mode 100644
-index 0000000..a540059
+index 0000000..931d8bd
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
-@@ -0,0 +1,514 @@
+@@ -0,0 +1,515 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.core.ui.NuvioToastController
@@ -922,6 +922,7 @@ index 0000000..a540059
 +import platform.Foundation.NSURL
 +import platform.Foundation.NSUTF8StringEncoding
 +import platform.Foundation.NSTemporaryDirectory
++import platform.Foundation.create
 +import platform.Foundation.writeToFile
 +import kotlin.coroutines.resume
 +
