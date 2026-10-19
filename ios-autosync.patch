@@ -1531,10 +1531,10 @@ index a11eb9c..d36d574 100644
  AutoSync has no debug logging setting and does not emit diagnostic logs.
  
 diff --git a/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift b/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
-index d390a95..6cfd18c 100644
+index d390a95..713307a 100644
 --- a/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
 +++ b/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
-@@ -370,3 +370,220 @@ final class FFmpegSeekPreviewGeneratorCreator: NSObject, NuvioSeekPreviewGenerat
+@@ -370,3 +370,221 @@ final class FFmpegSeekPreviewGeneratorCreator: NSObject, NuvioSeekPreviewGenerat
          FFmpegSeekPreviewGenerator(url: url, headers: headers)
      }
  }
@@ -1553,6 +1553,7 @@ index d390a95..6cfd18c 100644
 +    private static let ioTimeoutMicroseconds = "15000000"
 +    private static let loadTimeoutSeconds = 25.0
 +    private static let maxCuesPerTrack = 4_000
++    private static let eofErrorCode: Int32 = -541_478_725
 +
 +    init(url: String, headers: [String: String]) {
 +        self.url = url
@@ -1609,17 +1610,17 @@ index d390a95..6cfd18c 100644
 +        while !abortFlag.isSet {
 +            let readResult = av_read_frame(context, packet)
 +            if readResult < 0 {
-+                reachedEOF = readResult == AVERROR_EOF
++                reachedEOF = readResult == Self.eofErrorCode
 +                break
 +            }
 +
 +            let streamIndex = packet.pointee.stream_index
 +            if streamLookup[streamIndex] != nil,
 +               let stream = context.pointee.streams[Int(streamIndex)] {
-+                let timestamp = packet.pointee.pts != AV_NOPTS_VALUE
++                let timestamp = packet.pointee.pts != Int64.min
 +                    ? packet.pointee.pts
 +                    : packet.pointee.dts
-+                if timestamp != AV_NOPTS_VALUE {
++                if timestamp != Int64.min {
 +                    let timeBase = stream.pointee.time_base
 +                    let milliseconds = AVRational(num: 1, den: 1_000)
 +                    let startMs = av_rescale_q(timestamp, timeBase, milliseconds)
