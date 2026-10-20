@@ -34,16 +34,19 @@ index 0000000..f67c596
 +</resources>
 diff --git a/composeApp/src/commonMain/composeResources/values-ar/autosync_toast_strings.xml b/composeApp/src/commonMain/composeResources/values-ar/autosync_toast_strings.xml
 new file mode 100644
-index 0000000..6b283c3
+index 0000000..db01206
 --- /dev/null
 +++ b/composeApp/src/commonMain/composeResources/values-ar/autosync_toast_strings.xml
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,10 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string name="autosync_toast_failed">فشلت المزامنة: تعذّر مطابقة هذه الترجمة مع الفيديو.</string>
 +    <string name="autosync_toast_failed_no_reference">فشلت المزامنة: لا توجد ترجمة مدمجة صالحة للمقارنة.</string>
 +    <string name="autosync_toast_failed_unsupported">فشلت المزامنة: صيغة هذه الترجمة غير مدعومة.</string>
 +    <string name="autosync_label_synced">تمت المزامنة تلقائيًا</string>
++    <string name="autosync_subtitle_picker_failed_open">تعذّر فتح منتقي ملفات الترجمة.</string>
++    <string name="autosync_subtitle_picker_failed_copy">تعذّر نسخ ملف الترجمة المحدد.</string>
++    <string name="autosync_subtitle_picker_failed_read">تعذّر قراءة ملف الترجمة المحدد.</string>
 +</resources>
 diff --git a/composeApp/src/commonMain/composeResources/values-ar/strings.xml b/composeApp/src/commonMain/composeResources/values-ar/strings.xml
 index bcf6258..223f791 100644
@@ -76,6 +79,18 @@ index 31739af..0109b42 100644
      <string name="settings_playback_subtitle_auto_sync_description">Automatically sync the preferred add-on subtitle when playback starts. Requires a preferred subtitle language.</string>
      <string name="settings_playback_auto_sync_mode_aggressive">Auto Sync Search: Thorough</string>
      <string name="settings_playback_auto_sync_mode_aggressive_description">Keeps comparing other subtitles and embedded tracks for a closer match before syncing. Only confident matches are ever applied.</string>
+diff --git a/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml b/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml
+index 872c52d..ea742c8 100644
+--- a/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml
++++ b/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml
+@@ -4,4 +4,7 @@
+     <string name="autosync_toast_failed_no_reference">Sync failed: No usable embedded subtitles to compare with.</string>
+     <string name="autosync_toast_failed_unsupported">Sync failed: This subtitle format is not supported.</string>
+     <string name="autosync_label_synced">Auto synced</string>
++    <string name="autosync_subtitle_picker_failed_open">Unable to open the subtitle file picker.</string>
++    <string name="autosync_subtitle_picker_failed_copy">Unable to copy the selected subtitle file.</string>
++    <string name="autosync_subtitle_picker_failed_read">Unable to read the selected subtitle file.</string>
+ </resources>
 diff --git a/composeApp/src/commonMain/composeResources/values/strings.xml b/composeApp/src/commonMain/composeResources/values/strings.xml
 index 566e3ee..f1b658d 100644
 --- a/composeApp/src/commonMain/composeResources/values/strings.xml
@@ -264,6 +279,22 @@ index 0000000..5b46ed3
 +    private const val MIN_REFERENCE_CUES = 4
 +    private const val MIN_REFERENCE_SPAN_MS = 30_000L
 +}
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt
+index cd5d972..e4ab8c3 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt
+@@ -8,6 +8,11 @@ internal enum class AutoSyncCandidateScope {
+ internal fun decideAutoSyncStart(enabled: Boolean): AutoSyncStartAction =
+     if (enabled) AutoSyncStartAction.RUN else AutoSyncStartAction.ATTACH_ORIGINAL
+ 
++/** Media sources that the shared reference matcher can read without an audio fallback. */
++internal fun supportsAutoSyncMediaSource(sourceUrl: String): Boolean =
++    sourceUrl.substringBefore(':', missingDelimiterValue = "")
++        .lowercase() in setOf("http", "https", "file")
++
+ internal enum class AutoSyncStartAction {
+     RUN,
+     ATTACH_ORIGINAL,
 diff --git a/composeApp/src/androidMain/kotlin/com/nuvio/app/features/autosync/AutoSyncSampledReferenceAligner.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncSampledReferenceAligner.kt
 similarity index 100%
 rename from composeApp/src/androidMain/kotlin/com/nuvio/app/features/autosync/AutoSyncSampledReferenceAligner.kt
@@ -469,6 +500,19 @@ index 0000000..dc19a8e
 +        var endMs: Long,
 +    )
 +}
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncTimelineRetime.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncTimelineRetime.kt
+index c1230b1..205e145 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncTimelineRetime.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncTimelineRetime.kt
+@@ -1000,7 +1000,7 @@ internal object AutoSyncTimelineRetimer {
+             cues = retimed,
+             groups = emptyList(),
+             targetCoverage = 1.0,
+-            referenceCoverage = 0.0,
++            referenceCoverage = alignment.score,
+             skippedTargetCues = 0,
+             skippedReferenceCues = 0,
+             longestTargetSkipRun = 0,
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncTimelineTimeMapper.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncTimelineTimeMapper.kt
 new file mode 100644
 index 0000000..76d101d
@@ -697,10 +741,10 @@ index 0f18d77..653a594 100644
                      title = stringResource(Res.string.settings_playback_subtitle_strip_sdh),
 diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt
 new file mode 100644
-index 0000000..1a67663
+index 0000000..0f56e41
 --- /dev/null
 +++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,65 @@
 +package com.nuvio.app.features.autosync
 +
 +import kotlin.test.Test
@@ -708,6 +752,20 @@ index 0000000..1a67663
 +import kotlin.test.assertTrue
 +
 +class AutoSyncApplyPolicyTest {
++    @Test
++    fun acceptsRemoteAndLocalMediaSources() {
++        assertTrue(supportsAutoSyncMediaSource("https://media.example/movie.mkv"))
++        assertTrue(supportsAutoSyncMediaSource("http://media.example/movie.mkv"))
++        assertTrue(supportsAutoSyncMediaSource("file:///var/mobile/Downloads/movie.mkv"))
++    }
++
++    @Test
++    fun rejectsSourcesWithoutReadableMediaReferences() {
++        assertFalse(supportsAutoSyncMediaSource(""))
++        assertFalse(supportsAutoSyncMediaSource("content://provider/movie"))
++        assertFalse(supportsAutoSyncMediaSource("custom://movie"))
++    }
++
 +    @Test
 +    fun appliesOnlyToTheStillEnabledCurrentSourceAndOperation() {
 +        assertTrue(
@@ -754,10 +812,10 @@ index 0000000..1a67663
 +}
 diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcherTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcherTest.kt
 new file mode 100644
-index 0000000..e237740
+index 0000000..53f6b8f
 --- /dev/null
 +++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcherTest.kt
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,160 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.features.player.SubtitleSyncCue
@@ -840,6 +898,68 @@ index 0000000..e237740
 +        assertEquals("delay-only", match.timeline.alignmentSource)
 +        assertEquals(1.0, match.timeline.alignmentScale, 0.0001)
 +        assertEquals(3_200.0, abs(match.timeline.alignmentInterceptMs), 1.0)
++        assertEquals(match.timeline.referenceCoverage, match.timeline.activityScore, 0.0001)
++    }
++
++    @Test
++    fun selectsAlignedReferenceFromFortySparseReferencesAgainstFullSubtitle() {
++        val timelineCues = irregularCues(1_876)
++        val target = timelineCues.map { cue ->
++            cue.copy(
++                startTimeMs = cue.startTimeMs - 7_500L,
++                endTimeMs = cue.endTimeMs - 7_500L,
++            )
++        }
++        val references = List(39) { index ->
++            val cueCount = 22 + index % 26
++            val spacing = (timelineCues.size - 1).coerceAtLeast(cueCount - 1) / (cueCount - 1)
++            AutoSyncReferenceTimeline(
++                key = "embedded:$index",
++                language = "und",
++                label = "Embedded $index",
++                cues = List(cueCount) { cueIndex ->
++                    timelineCues[(cueIndex * spacing).coerceAtMost(timelineCues.lastIndex)]
++                },
++                sampled = true,
++            )
++        }
++
++        val match = assertNotNull(
++            AutoSyncReferenceMatcher.findBest(
++                target = target,
++                references = references,
++            ),
++        )
++
++        assertEquals("delay-only", match.timeline.alignmentSource)
++        assertEquals(7_500.0, abs(match.timeline.alignmentInterceptMs), 1.0)
++        assertEquals(match.timeline.referenceCoverage, match.timeline.activityScore, 0.0001)
++    }
++
++    @Test
++    fun rejectsDenseTargetTimingThatDoesNotShareTheReferenceTimeline() {
++        val reference = irregularCues(40)
++        val target = irregularCues(1_876).map { cue ->
++            cue.copy(
++                startTimeMs = cue.startTimeMs * 2L + 240_000L,
++                endTimeMs = cue.endTimeMs * 2L + 240_000L,
++            )
++        }
++
++        assertNull(
++            AutoSyncReferenceMatcher.findBest(
++                target = target,
++                references = listOf(
++                    AutoSyncReferenceTimeline(
++                        key = "different-cut",
++                        language = "ar",
++                        label = "Arabic",
++                        cues = reference,
++                        sampled = true,
++                    ),
++                ),
++            ),
++        )
 +    }
 +
 +    private fun irregularCues(count: Int): List<SubtitleSyncCue> {
@@ -1138,10 +1258,10 @@ index 0000000..57f361d
 +}
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
 new file mode 100644
-index 0000000..12e201e
+index 0000000..152263f
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
-@@ -0,0 +1,552 @@
+@@ -0,0 +1,551 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.core.ui.NuvioToastController
@@ -1310,8 +1430,7 @@ index 0000000..12e201e
 +        attachOriginal(url)
 +        if (
 +            !AutoSyncPreferencesRepository.preferredSubtitleAutoSyncOnStart.value ||
-+            !currentSourceUrl.startsWith("http://", ignoreCase = true) &&
-+            !currentSourceUrl.startsWith("https://", ignoreCase = true)
++            !supportsAutoSyncMediaSource(currentSourceUrl)
 +        ) {
 +            return
 +        }
@@ -1787,10 +1906,10 @@ index c777185..630e30d 100644
              InAppLogger.info("Player/iOS", "destroy bridge positionMs=${bridge.getPositionMs()} durationMs=${bridge.getDurationMs()}")
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.ios.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.ios.kt
 new file mode 100644
-index 0000000..7d1f4cb
+index 0000000..6743b7a
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.ios.kt
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,123 @@
 +package com.nuvio.app.features.player
 +
 +import androidx.compose.runtime.Composable
@@ -1807,6 +1926,11 @@ index 0000000..7d1f4cb
 +import platform.UIKit.UIDocumentPickerViewController
 +import platform.UIKit.UIViewController
 +import platform.darwin.NSObject
++import nuvio.composeapp.generated.resources.Res
++import nuvio.composeapp.generated.resources.autosync_subtitle_picker_failed_copy
++import nuvio.composeapp.generated.resources.autosync_subtitle_picker_failed_open
++import nuvio.composeapp.generated.resources.autosync_subtitle_picker_failed_read
++import org.jetbrains.compose.resources.stringResource
 +
 +@Composable
 +@OptIn(ExperimentalForeignApi::class)
@@ -1815,11 +1939,14 @@ index 0000000..7d1f4cb
 +    onError: (message: String) -> Unit,
 +): () -> Unit {
 +    val delegateHolder = remember { mutableStateOf<SubtitleDocumentPickerDelegate?>(null) }
++    val unableToOpen = stringResource(Res.string.autosync_subtitle_picker_failed_open)
++    val unableToCopy = stringResource(Res.string.autosync_subtitle_picker_failed_copy)
++    val unableToRead = stringResource(Res.string.autosync_subtitle_picker_failed_read)
 +
 +    return {
 +        val presenter = topSubtitlePickerController()
 +        if (presenter == null) {
-+            onError("Unable to open the subtitle file picker.")
++            onError(unableToOpen)
 +        } else {
 +            val picker = UIDocumentPickerViewController(
 +                documentTypes = listOf("public.text", "public.data"),
@@ -1831,12 +1958,12 @@ index 0000000..7d1f4cb
 +                    try {
 +                        val copiedUrl = copySubtitleToTemporaryDirectory(url)
 +                        if (copiedUrl == null) {
-+                            onError("Unable to copy the selected subtitle file.")
++                            onError(unableToCopy)
 +                        } else {
 +                            onPicked(copiedUrl)
 +                        }
-+                    } catch (error: Throwable) {
-+                        onError(error.message ?: "Unable to read the selected subtitle file.")
++                    } catch (_: Throwable) {
++                        onError(unableToRead)
 +                    } finally {
 +                        if (didStartAccess) {
 +                            url.stopAccessingSecurityScopedResource()
