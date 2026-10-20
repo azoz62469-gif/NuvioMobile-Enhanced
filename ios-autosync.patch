@@ -443,6 +443,32 @@ index 228e2dd..d1de214 100644
      val preferredLanguageAvailable =
          preferredSubtitleLanguage.isNotBlank() &&
              preferredSubtitleLanguage != SubtitleLanguageOption.NONE &&
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/PlaybackSettingsPage.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/PlaybackSettingsPage.kt
+index 0f18d77..653a594 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/PlaybackSettingsPage.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/PlaybackSettingsPage.kt
+@@ -605,14 +605,13 @@ private fun PlaybackSettingsSection(
+                     isTablet = isTablet,
+                     onClick = { showSecondarySubtitleDialog = true },
+                 )
+-                if (!isIos) {
+-                    SettingsGroupDivider(isTablet = isTablet)
+-                    AutoSyncPlaybackSettingsRows( // AutoSync hook
+-                        isTablet = isTablet,
+-                        enabled = otherSubtitleOptionsEnabled && androidPlaybackEngine != AndroidPlaybackEngine.Libmpv,
+-                        preferredSubtitleLanguage = preferredSubtitleLanguage,
+-                    )
+-                }
++                SettingsGroupDivider(isTablet = isTablet)
++                AutoSyncPlaybackSettingsRows( // AutoSync hook
++                    isTablet = isTablet,
++                    enabled = otherSubtitleOptionsEnabled &&
++                        (isIos || androidPlaybackEngine != AndroidPlaybackEngine.Libmpv),
++                    preferredSubtitleLanguage = preferredSubtitleLanguage,
++                )
+                 SettingsGroupDivider(isTablet = isTablet)
+                 SettingsSwitchRow(
+                     title = stringResource(Res.string.settings_playback_subtitle_strip_sdh),
 diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt
 new file mode 100644
 index 0000000..1a67663
