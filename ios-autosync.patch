@@ -1,12 +1,12 @@
 diff --git a/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml b/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml
 new file mode 100644
-index 0000000..de4ed56
+index 0000000..044b84e
 --- /dev/null
 +++ b/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml
 @@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة (v9)</string>
++    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة (v11)</string>
 +    <string name="settings_playback_subtitle_auto_sync_description">زامن ترجمة الإضافة المفضلة تلقائيًا عند بدء التشغيل. يتطلب تحديد لغة ترجمة مفضلة.</string>
 +    <string name="settings_playback_auto_sync_mode_aggressive">بحث المزامنة: شامل</string>
 +    <string name="settings_playback_auto_sync_mode_aggressive_description">يواصل مقارنة الترجمات والمسارات المدمجة الأخرى للحصول على تطابق أدق قبل المزامنة. لا تُطبَّق إلا المطابقات الواثقة.</string>
@@ -31,14 +31,14 @@ index 0000000..6b283c3
 +    <string name="autosync_label_synced">تمت المزامنة تلقائيًا</string>
 +</resources>
 diff --git a/composeApp/src/commonMain/composeResources/values/autosync_strings.xml b/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
-index 31739af..3042085 100644
+index 31739af..4516253 100644
 --- a/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
 +++ b/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
 @@ -1,6 +1,6 @@
  <?xml version="1.0" encoding="utf-8"?>
  <resources>
 -    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle</string>
-+    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle (v9)</string>
++    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle (v11)</string>
      <string name="settings_playback_subtitle_auto_sync_description">Automatically sync the preferred add-on subtitle when playback starts. Requires a preferred subtitle language.</string>
      <string name="settings_playback_auto_sync_mode_aggressive">Auto Sync Search: Thorough</string>
      <string name="settings_playback_auto_sync_mode_aggressive_description">Keeps comparing other subtitles and embedded tracks for a closer match before syncing. Only confident matches are ever applied.</string>
@@ -1639,18 +1639,18 @@ index a11eb9c..d36d574 100644
  AutoSync has no debug logging setting and does not emit diagnostic logs.
  
 diff --git a/iosApp/Configuration/Version.xcconfig b/iosApp/Configuration/Version.xcconfig
-index b1e2a89..e284fe0 100644
+index b1e2a89..55eee5b 100644
 --- a/iosApp/Configuration/Version.xcconfig
 +++ b/iosApp/Configuration/Version.xcconfig
 @@ -1,2 +1,2 @@
 -CURRENT_PROJECT_VERSION=145
-+CURRENT_PROJECT_VERSION=20261020
++CURRENT_PROJECT_VERSION=2026102002
  MARKETING_VERSION=0.6.2
 diff --git a/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift b/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
-index d390a95..713307a 100644
+index d390a95..77a5f44 100644
 --- a/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
 +++ b/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
-@@ -370,3 +370,221 @@ final class FFmpegSeekPreviewGeneratorCreator: NSObject, NuvioSeekPreviewGenerat
+@@ -370,3 +370,224 @@ final class FFmpegSeekPreviewGeneratorCreator: NSObject, NuvioSeekPreviewGenerat
          FFmpegSeekPreviewGenerator(url: url, headers: headers)
      }
  }
@@ -1667,7 +1667,7 @@ index d390a95..713307a 100644
 +    private let abortFlag = EmbeddedSubtitleAbortFlag()
 +
 +    private static let ioTimeoutMicroseconds = "15000000"
-+    private static let loadTimeoutSeconds = 25.0
++    private static let loadTimeoutSeconds = 45.0
 +    private static let maxCuesPerTrack = 4_000
 +    private static let eofErrorCode: Int32 = -541_478_725
 +
@@ -1705,7 +1705,10 @@ index d390a95..713307a 100644
 +            let isBitmap = ["pgs", "dvd", "dvb", "xsub", "teletext"].contains {
 +                name.contains($0)
 +            }
-+            if isBitmap {
++            // Forced tracks only carry signs and songs, so they cannot validate a full
++            // dialogue subtitle against the video timeline.
++            let isForced = (stream.pointee.disposition & 64) != 0
++            if isBitmap || isForced {
 +                stream.pointee.discard = AVDISCARD_ALL
 +                continue
 +            }
