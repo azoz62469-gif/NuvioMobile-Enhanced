@@ -31,10 +31,10 @@ index 3b7b670..0157dac 100644
      fun setAutoSyncSubtitleCandidates(candidates: List<AutoSyncSubtitleCandidate>)
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcher.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcher.kt
 new file mode 100644
-index 0000000..dd051be
+index 0000000..5b46ed3
 --- /dev/null
 +++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcher.kt
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,117 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.features.player.SubtitleSyncCue
@@ -82,7 +82,7 @@ index 0000000..dd051be
 +                ) ?: continue
 +                AutoSyncTimelineRetimer.buildDelayOnlyTimeline(target, alignment)
 +            } else {
-+                AutoSyncTimelineRetimer.retime(
++                val detailed = AutoSyncTimelineRetimer.retime(
 +                    reference = reference.cues,
 +                    target = target,
 +                    coarseScale = 1.0,
@@ -94,7 +94,19 @@ index 0000000..dd051be
 +                            referenceSize = reference.cues.size,
 +                            targetSize = target.size,
 +                        ),
-+                ) ?: continue
++                )
++                if (detailed != null && detailed.confident) {
++                    detailed
++                } else {
++                    // Subtitle releases often differ only by a constant intro offset. When the
++                    // grouped alignment is not confident, fall back to the conservative
++                    // delay-only matcher instead of reporting a failure.
++                    val alignment = AutoSyncSampledReferenceAligner.findDelay(
++                        reference = reference.cues,
++                        target = target,
++                    ) ?: continue
++                    AutoSyncTimelineRetimer.buildDelayOnlyTimeline(target, alignment)
++                }
 +            }
 +            if (!timeline.confident) continue
 +
@@ -904,13 +916,14 @@ index 0000000..25e4f3f
 +}
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
 new file mode 100644
-index 0000000..d44b863
+index 0000000..8030960
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
-@@ -0,0 +1,517 @@
+@@ -0,0 +1,541 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.core.ui.NuvioToastController
++import com.nuvio.app.core.logging.InAppLogger
 +import com.nuvio.app.features.addons.httpGetTextWithHeaders
 +import com.nuvio.app.features.player.NuvioPlayerBridge
 +import com.nuvio.app.features.player.PlayerEngineController
@@ -1094,6 +1107,18 @@ index 0000000..d44b863
 +                    }
 +                }.orEmpty()
 +                val references = referencesJob.await()
++                InAppLogger.info(
++                    "AutoSync/iOS",
++                    "references=${references.size} " +
++                        references.joinToString(separator = ", ") { reference ->
++                            "${reference.key}:${reference.cues.size}${if (reference.sampled) "s" else ""}"
++                        },
++                )
++                if (selectedBody == null) {
++                    InAppLogger.warn("AutoSync/iOS", "selected subtitle body did not load")
++                } else if (selectedCues.isEmpty()) {
++                    InAppLogger.warn("AutoSync/iOS", "selected subtitle produced no cues")
++                }
 +                currentCoroutineContext().ensureActive()
 +                if (
 +                    !canApplyAutoSyncResult(
@@ -1149,6 +1174,13 @@ index 0000000..d44b863
 +                }
 +
 +                currentCoroutineContext().ensureActive()
++                InAppLogger.info(
++                    "AutoSync/iOS",
++                    "selectedCues=${selectedCues.size} language=${selectedLanguage ?: "none"} " +
++                        "best=${best?.score ?: -1.0} " +
++                        "alignment=${best?.timeline?.alignmentSource ?: "none"} " +
++                        "offsetMs=${best?.timeline?.alignmentInterceptMs ?: 0.0}",
++                )
 +                if (
 +                    !canApplyAutoSyncResult(
 +                        enabled = AutoSyncPreferencesRepository.preferredSubtitleAutoSyncOnStart.value,
@@ -1162,6 +1194,10 @@ index 0000000..d44b863
 +                val match = best
 +                val candidate = bestCandidate
 +                if (match == null || candidate == null) {
++                    InAppLogger.warn(
++                        "AutoSync/iOS",
++                        "no confident match references=${references.size} selectedCues=${selectedCues.size}",
++                    )
 +                    showFailure(
 +                        token,
 +                        if (references.isEmpty()) {
