@@ -72,7 +72,9 @@ jobs:
             sed -i '' -E '/^[[:space:]]*(sdk\.dir|NUVIO_RELEASE_STORE_FILE)[[:space:]]*=/d' local.properties
           else
             : > local.properties
-            echo "NUVIO_LOCAL_PROPERTIES_BASE64 is absent; using blank runtime defaults."
+            printf 'NUVIO_SUPABASE_URL=%s\n' 'https://api.nuvio.tv' >> local.properties
+            printf 'NUVIO_SUPABASE_ANON_KEY=%s\n' 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgxNTIxMzQ2LCJleHAiOjE5MzkyMDEzNDZ9.tmQaj682pwzehpqlgCDMnySOqiUvpgRbrE43T4VJpDI' >> local.properties
+            echo "NUVIO_LOCAL_PROPERTIES_BASE64 is absent; using the official Nuvio backend."
           fi
           if [[ -n "${CONTRIBUTIONS_URL:-}" ]]; then
             printf 'CONTRIBUTIONS_URL=%s\n' "${CONTRIBUTIONS_URL}" >> local.properties
