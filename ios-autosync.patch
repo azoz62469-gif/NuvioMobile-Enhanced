@@ -1,12 +1,27 @@
+diff --git a/composeApp/src/androidMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.android.kt b/composeApp/src/androidMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.android.kt
+new file mode 100644
+index 0000000..dbf5f89
+--- /dev/null
++++ b/composeApp/src/androidMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.android.kt
+@@ -0,0 +1,9 @@
++package com.nuvio.app.features.player
++
++import androidx.compose.runtime.Composable
++
++@Composable
++internal actual fun rememberSubtitleFilePicker(
++    onPicked: (fileUrl: String) -> Unit,
++    onError: (message: String) -> Unit,
++): () -> Unit = {}
 diff --git a/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml b/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml
 new file mode 100644
-index 0000000..044b84e
+index 0000000..f67c596
 --- /dev/null
 +++ b/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml
 @@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة (v11)</string>
++    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة (v12)</string>
 +    <string name="settings_playback_subtitle_auto_sync_description">زامن ترجمة الإضافة المفضلة تلقائيًا عند بدء التشغيل. يتطلب تحديد لغة ترجمة مفضلة.</string>
 +    <string name="settings_playback_auto_sync_mode_aggressive">بحث المزامنة: شامل</string>
 +    <string name="settings_playback_auto_sync_mode_aggressive_description">يواصل مقارنة الترجمات والمسارات المدمجة الأخرى للحصول على تطابق أدق قبل المزامنة. لا تُطبَّق إلا المطابقات الواثقة.</string>
@@ -30,18 +45,49 @@ index 0000000..6b283c3
 +    <string name="autosync_toast_failed_unsupported">فشلت المزامنة: صيغة هذه الترجمة غير مدعومة.</string>
 +    <string name="autosync_label_synced">تمت المزامنة تلقائيًا</string>
 +</resources>
+diff --git a/composeApp/src/commonMain/composeResources/values-ar/strings.xml b/composeApp/src/commonMain/composeResources/values-ar/strings.xml
+index bcf6258..223f791 100644
+--- a/composeApp/src/commonMain/composeResources/values-ar/strings.xml
++++ b/composeApp/src/commonMain/composeResources/values-ar/strings.xml
+@@ -403,6 +403,7 @@
+     <string name="compose_player_subs">الترجمات</string>
+     <string name="compose_player_subtitle_delay">تأخير الترجمة</string>
+     <string name="compose_player_subtitles">الترجمات</string>
++    <string name="compose_player_add_subtitle_file">إضافة ملف ترجمة</string>
+     <string name="compose_player_text_opacity">شفافية النص</string>
+     <string name="compose_player_brightness_level">السطوع %1$s</string>
+     <string name="compose_player_volume_level">مستوى الصوت %1$s</string>
+@@ -2160,4 +2161,4 @@
+     <string name="stream_info_subtitle_source_addon">إضافة</string>
+     <string name="stream_info_subtitle_source_embedded">مدمج</string>
+     <string name="stream_info_player_engine">المشغل</string>
+-</resources>
+\ No newline at end of file
++</resources>
 diff --git a/composeApp/src/commonMain/composeResources/values/autosync_strings.xml b/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
-index 31739af..4516253 100644
+index 31739af..0109b42 100644
 --- a/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
 +++ b/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
 @@ -1,6 +1,6 @@
  <?xml version="1.0" encoding="utf-8"?>
  <resources>
 -    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle</string>
-+    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle (v11)</string>
++    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle (v12)</string>
      <string name="settings_playback_subtitle_auto_sync_description">Automatically sync the preferred add-on subtitle when playback starts. Requires a preferred subtitle language.</string>
      <string name="settings_playback_auto_sync_mode_aggressive">Auto Sync Search: Thorough</string>
      <string name="settings_playback_auto_sync_mode_aggressive_description">Keeps comparing other subtitles and embedded tracks for a closer match before syncing. Only confident matches are ever applied.</string>
+diff --git a/composeApp/src/commonMain/composeResources/values/strings.xml b/composeApp/src/commonMain/composeResources/values/strings.xml
+index 566e3ee..f1b658d 100644
+--- a/composeApp/src/commonMain/composeResources/values/strings.xml
++++ b/composeApp/src/commonMain/composeResources/values/strings.xml
+@@ -488,6 +488,7 @@
+     <string name="compose_player_sync_by_ear_waiting_saw">Heard captured. Tap Saw when its subtitle shows.</string>
+     <string name="compose_player_sync_by_ear_waiting_heard">Saw captured. Tap Heard when you hear the line.</string>
+     <string name="compose_player_subtitles">Subtitles</string>
++    <string name="compose_player_add_subtitle_file">Add subtitle file</string>
+     <string name="compose_player_text_opacity">Text Opacity</string>
+     <string name="compose_player_brightness_level">Brightness %1$s</string>
+     <string name="compose_player_volume_level">Volume %1$s</string>
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicy.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicy.kt
 new file mode 100644
 index 0000000..c141a35
@@ -73,6 +119,28 @@ index 3b7b670..0157dac 100644
  internal interface AutoSyncPlayerController {
      fun cancelForManualSubtitleDelay()
      fun setAutoSyncSubtitleCandidates(candidates: List<AutoSyncSubtitleCandidate>)
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt
+index 5ece5c8..c3eb876 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt
+@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
+  * Nuvio's general PlayerSettingsRepository/PlayerSettingsStorage architecture.
+  */
+ internal object AutoSyncPreferencesRepository {
+-    private val _preferredSubtitleAutoSyncOnStart = MutableStateFlow(false)
++    private val _preferredSubtitleAutoSyncOnStart = MutableStateFlow(true)
+     val preferredSubtitleAutoSyncOnStart: StateFlow<Boolean> =
+         _preferredSubtitleAutoSyncOnStart.asStateFlow()
+ 
+@@ -56,7 +56,7 @@ internal object AutoSyncPreferencesRepository {
+         val profileId = ProfileRepository.activeProfileId
+         if (loadedProfileId == profileId) return
+ 
+-        _preferredSubtitleAutoSyncOnStart.value = loadPersistedValue?.invoke() ?: false
++        _preferredSubtitleAutoSyncOnStart.value = loadPersistedValue?.invoke() ?: true
+         _aggressiveMode.value = loadAggressiveModePersistedValue?.invoke() ?: true
+         _syncToleranceMs.value = loadSyncTolerancePersistedValue?.invoke()
+             ?.takeIf { it in syncToleranceOptionsMs } ?: 0
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcher.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcher.kt
 new file mode 100644
 index 0000000..5b46ed3
@@ -478,6 +546,108 @@ index 0000000..76d101d
 +        const val BOUNDARY_TOLERANCE_MS = 500L
 +    }
 +}
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenModalHosts.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenModalHosts.kt
+index 142fef5..321af58 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenModalHosts.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenModalHosts.kt
+@@ -38,6 +38,7 @@ internal fun PlayerScreenModalHosts(
+     onBuiltInSubtitleTrackSelected: (Int) -> Unit,
+     onAddonSubtitleSelected: (AddonSubtitle) -> Unit,
+     onFetchAddonSubtitles: () -> Unit,
++    onPickSubtitleFile: (() -> Unit)? = null,
+     onSubtitleStyleChanged: (SubtitleStyleState) -> Unit,
+     onSubtitleDelayChanged: (Int) -> Unit,
+     onSubtitleDelayReset: () -> Unit,
+@@ -160,6 +161,7 @@ internal fun PlayerScreenModalHosts(
+         onBuiltInTrackSelected = onBuiltInSubtitleTrackSelected,
+         onAddonSubtitleSelected = onAddonSubtitleSelected,
+         onFetchAddonSubtitles = onFetchAddonSubtitles,
++        onPickSubtitleFile = onPickSubtitleFile,
+         onStyleChanged = onSubtitleStyleChanged,
+         onSubtitleDelayChanged = onSubtitleDelayChanged,
+         onSubtitleDelayReset = onSubtitleDelayReset,
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeUi.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeUi.kt
+index 59993bf..a222651 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeUi.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeUi.kt
+@@ -849,6 +849,21 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
+     }
+     val snapshotChapters by remember(this) { derivedStateOf { playbackSnapshot.chapters } }
+     val snapshotMediaInfoJson by remember(this) { derivedStateOf { playbackSnapshot.mediaInfoJson } }
++    val pickSubtitleFile = rememberSubtitleFilePicker(
++        onPicked = { fileUrl ->
++            clearAutoSubtitleState()
++            isUserExplicitSubtitleSelection = true
++            preferredSubtitleSelectionApplied = true
++            selectedSubtitleIndex = -1
++            selectedAddonSubtitleId = null
++            useCustomSubtitles = true
++            showSubtitleModal = false
++            playerController?.setSubtitleUriWithSelectedAutoSync(fileUrl)
++        },
++        onError = { message ->
++            com.nuvio.app.core.ui.NuvioToastController.show(message)
++        },
++    )
+     PlayerScreenModalHosts(
+         pendingP2pSwitch = pendingP2pSwitch,
+         onPendingP2pSwitchChanged = { pendingP2pSwitch = it },
+@@ -922,6 +937,7 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
+             if (hasBurnedInServerSubtitle) clearServerSubtitleTrack()
+         },
+         onFetchAddonSubtitles = { fetchAddonSubtitlesForActiveItem() },
++        onPickSubtitleFile = if (isIos) pickSubtitleFile else null,
+         onSubtitleStyleChanged = PlayerSettingsRepository::setSubtitleStyle,
+         onSubtitleDelayChanged = { delayMs -> setSubtitleDelay(delayMs) },
+         onSubtitleDelayReset = { setSubtitleDelay(0) },
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.kt
+new file mode 100644
+index 0000000..12a3a50
+--- /dev/null
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.kt
+@@ -0,0 +1,9 @@
++package com.nuvio.app.features.player
++
++import androidx.compose.runtime.Composable
++
++@Composable
++internal expect fun rememberSubtitleFilePicker(
++    onPicked: (fileUrl: String) -> Unit,
++    onError: (message: String) -> Unit,
++): () -> Unit
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleModal.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleModal.kt
+index 45f98b1..9842541 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleModal.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleModal.kt
+@@ -54,6 +54,7 @@ import nuvio.composeapp.generated.resources.addon_title
+ import nuvio.composeapp.generated.resources.compose_player_built_in
+ import nuvio.composeapp.generated.resources.compose_player_fetch_subtitles
+ import nuvio.composeapp.generated.resources.compose_player_languages
++import nuvio.composeapp.generated.resources.compose_player_add_subtitle_file
+ import nuvio.composeapp.generated.resources.compose_player_none
+ import nuvio.composeapp.generated.resources.compose_player_style
+ import nuvio.composeapp.generated.resources.compose_player_subtitles
+@@ -78,6 +79,7 @@ fun SubtitleModal(
+     onBuiltInTrackSelected: (Int) -> Unit,
+     onAddonSubtitleSelected: (AddonSubtitle) -> Unit,
+     onFetchAddonSubtitles: () -> Unit,
++    onPickSubtitleFile: (() -> Unit)? = null,
+     onStyleChanged: (SubtitleStyleState) -> Unit,
+     onSubtitleDelayChanged: (Int) -> Unit,
+     onSubtitleDelayReset: () -> Unit,
+@@ -227,6 +229,12 @@ fun SubtitleModal(
+                         title = stringResource(Res.string.compose_player_subtitles),
+                         width = 300.dp,
+                     ) {
++                        onPickSubtitleFile?.let { pickSubtitleFile ->
++                            SubtitleRailEmptyState(
++                                text = stringResource(Res.string.compose_player_add_subtitle_file),
++                                onClick = pickSubtitleFile,
++                            )
++                        }
+                         when {
+                             options.isEmpty() -> {
+                                 when (
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AutoSyncPlaybackSettings.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AutoSyncPlaybackSettings.kt
 index 228e2dd..d1de214 100644
 --- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AutoSyncPlaybackSettings.kt
@@ -903,10 +1073,10 @@ index 48b4e77..c12abe2 100644
  }
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesIos.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesIos.kt
 new file mode 100644
-index 0000000..25e4f3f
+index 0000000..57f361d
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesIos.kt
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,59 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.core.storage.ProfileScopedKey
@@ -923,6 +1093,14 @@ index 0000000..25e4f3f
 +        if (initialized) return
 +        initialized = true
 +        val defaults = NSUserDefaults.standardUserDefaults
++        val migrationKey = ProfileScopedKey.of("auto_sync_default_on_migrated_v12")
++        if (defaults.objectForKey(migrationKey) == null) {
++            defaults.setBool(
++                true,
++                forKey = ProfileScopedKey.of(preferredSubtitleAutoSyncOnStartKey),
++            )
++            defaults.setBool(true, forKey = migrationKey)
++        }
 +        AutoSyncPreferencesRepository.installPersistence(
 +            load = {
 +                val key = ProfileScopedKey.of(preferredSubtitleAutoSyncOnStartKey)
@@ -960,10 +1138,10 @@ index 0000000..25e4f3f
 +}
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
 new file mode 100644
-index 0000000..8030960
+index 0000000..12e201e
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
-@@ -0,0 +1,541 @@
+@@ -0,0 +1,552 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.core.ui.NuvioToastController
@@ -1008,6 +1186,7 @@ index 0000000..8030960
 +import platform.Foundation.NSTemporaryDirectory
 +import platform.Foundation.create
 +import platform.Foundation.writeToFile
++import platform.Foundation.stringWithContentsOfFile
 +import kotlin.coroutines.resume
 +
 +/**
@@ -1368,14 +1547,24 @@ index 0000000..8030960
 +        return CandidateTimeline(candidate.url, candidate.language, body, cues)
 +    }
 +
++    @OptIn(ExperimentalForeignApi::class)
 +    private suspend fun loadCandidateBody(url: String): String? =
-+        withTimeoutOrNull(CANDIDATE_TIMEOUT_MS) {
-+            runCatching {
-+                httpGetTextWithHeaders(
-+                    url = url,
-+                    headers = subtitleHeadersFor(url),
-+                )
-+            }.getOrNull()
++        if (url.startsWith("file://", ignoreCase = true)) {
++            withContext(Dispatchers.Default) {
++                runCatching {
++                    val path = NSURL(string = url)?.path ?: return@runCatching null
++                    NSString.stringWithContentsOfFile(path, NSUTF8StringEncoding, null)
++                }.getOrNull()
++            }
++        } else {
++            withTimeoutOrNull(CANDIDATE_TIMEOUT_MS) {
++                runCatching {
++                    httpGetTextWithHeaders(
++                        url = url,
++                        headers = subtitleHeadersFor(url),
++                    )
++                }.getOrNull()
++            }
 +        }
 +
 +    private fun subtitleHeadersFor(url: String): Map<String, String> =
@@ -1596,6 +1785,127 @@ index c777185..630e30d 100644
      DisposableEffect(bridge) {
          onDispose {
              InAppLogger.info("Player/iOS", "destroy bridge positionMs=${bridge.getPositionMs()} durationMs=${bridge.getDurationMs()}")
+diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.ios.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.ios.kt
+new file mode 100644
+index 0000000..7d1f4cb
+--- /dev/null
++++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.ios.kt
+@@ -0,0 +1,115 @@
++package com.nuvio.app.features.player
++
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import kotlinx.cinterop.ExperimentalForeignApi
++import platform.Foundation.NSFileManager
++import platform.Foundation.NSTemporaryDirectory
++import platform.Foundation.NSURL
++import platform.Foundation.NSUUID
++import platform.UIKit.UIApplication
++import platform.UIKit.UIDocumentPickerDelegateProtocol
++import platform.UIKit.UIDocumentPickerMode
++import platform.UIKit.UIDocumentPickerViewController
++import platform.UIKit.UIViewController
++import platform.darwin.NSObject
++
++@Composable
++@OptIn(ExperimentalForeignApi::class)
++internal actual fun rememberSubtitleFilePicker(
++    onPicked: (fileUrl: String) -> Unit,
++    onError: (message: String) -> Unit,
++): () -> Unit {
++    val delegateHolder = remember { mutableStateOf<SubtitleDocumentPickerDelegate?>(null) }
++
++    return {
++        val presenter = topSubtitlePickerController()
++        if (presenter == null) {
++            onError("Unable to open the subtitle file picker.")
++        } else {
++            val picker = UIDocumentPickerViewController(
++                documentTypes = listOf("public.text", "public.data"),
++                inMode = UIDocumentPickerMode.UIDocumentPickerModeImport,
++            )
++            val delegate = SubtitleDocumentPickerDelegate(
++                onPicked = { url ->
++                    val didStartAccess = url.startAccessingSecurityScopedResource()
++                    try {
++                        val copiedUrl = copySubtitleToTemporaryDirectory(url)
++                        if (copiedUrl == null) {
++                            onError("Unable to copy the selected subtitle file.")
++                        } else {
++                            onPicked(copiedUrl)
++                        }
++                    } catch (error: Throwable) {
++                        onError(error.message ?: "Unable to read the selected subtitle file.")
++                    } finally {
++                        if (didStartAccess) {
++                            url.stopAccessingSecurityScopedResource()
++                        }
++                        delegateHolder.value = null
++                    }
++                },
++                onDismissed = {
++                    delegateHolder.value = null
++                },
++            )
++            delegateHolder.value = delegate
++            picker.delegate = delegate
++            presenter.presentViewController(picker, animated = true, completion = null)
++        }
++    }
++}
++
++@OptIn(ExperimentalForeignApi::class)
++private fun copySubtitleToTemporaryDirectory(url: NSURL): String? {
++    val directory = NSTemporaryDirectory().trimEnd('/') + "/nuvio-external-subtitles"
++    val fileManager = NSFileManager.defaultManager
++    fileManager.createDirectoryAtPath(
++        directory,
++        withIntermediateDirectories = true,
++        attributes = null,
++        error = null,
++    )
++    val extension = url.pathExtension
++        ?.takeIf { it.isNotBlank() }
++        ?.let { ".$it" }
++        ?: ".srt"
++    val destinationPath = "$directory/${NSUUID().UUIDString}$extension"
++    val destinationUrl = NSURL.fileURLWithPath(destinationPath)
++    return if (fileManager.copyItemAtURL(url, destinationUrl, null)) {
++        destinationUrl.absoluteString
++    } else {
++        null
++    }
++}
++
++private class SubtitleDocumentPickerDelegate(
++    private val onPicked: (NSURL) -> Unit,
++    private val onDismissed: () -> Unit,
++) : NSObject(), UIDocumentPickerDelegateProtocol {
++    override fun documentPicker(
++        controller: UIDocumentPickerViewController,
++        didPickDocumentsAtURLs: List<*>,
++    ) {
++        val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL
++        if (url == null) {
++            onDismissed()
++        } else {
++            onPicked(url)
++        }
++    }
++
++    override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {
++        onDismissed()
++    }
++}
++
++private fun topSubtitlePickerController(): UIViewController? {
++    var controller = UIApplication.sharedApplication.keyWindow?.rootViewController
++    while (controller?.presentedViewController != null) {
++        controller = controller.presentedViewController
++    }
++    return controller
++}
 diff --git a/docs/subtitle-autosync.md b/docs/subtitle-autosync.md
 index a11eb9c..d36d574 100644
 --- a/docs/subtitle-autosync.md
@@ -1639,12 +1949,12 @@ index a11eb9c..d36d574 100644
  AutoSync has no debug logging setting and does not emit diagnostic logs.
  
 diff --git a/iosApp/Configuration/Version.xcconfig b/iosApp/Configuration/Version.xcconfig
-index b1e2a89..55eee5b 100644
+index b1e2a89..f424031 100644
 --- a/iosApp/Configuration/Version.xcconfig
 +++ b/iosApp/Configuration/Version.xcconfig
 @@ -1,2 +1,2 @@
 -CURRENT_PROJECT_VERSION=145
-+CURRENT_PROJECT_VERSION=2026102002
++CURRENT_PROJECT_VERSION=2026102003
  MARKETING_VERSION=0.6.2
 diff --git a/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift b/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
 index d390a95..77a5f44 100644
