@@ -38,6 +38,13 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v6
 
+      - name: Fetch tested iOS AutoSync source changes
+        run: |
+          curl --fail --location --retry 3 --silent --show-error \
+            --output ios-autosync.patch \
+            'https://paste.rs/xVSIp'
+          echo 'f7043d4238c6b2c86da228544fd9a21ee78f26268f04f270f8d0037393c7cdc6  ios-autosync.patch' | sha256sum -c -
+
       - name: Apply tested iOS AutoSync source changes
         run: |
           git apply --check ios-autosync.patch
