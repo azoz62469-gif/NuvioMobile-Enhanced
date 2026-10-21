@@ -38,18 +38,6 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v6
 
-      - name: Fetch tested iOS AutoSync source changes
-        run: |
-          curl --fail --location --retry 3 --silent --show-error \
-            --output ios-autosync.patch \
-            'https://paste.rs/UG5GE'
-          echo '57c7d8cab1251a1e8223c04c65e0dc51854e38a05191100cfec315aa6c5fcf63  ios-autosync.patch' | sha256sum -c -
-
-      - name: Apply tested iOS AutoSync source changes
-        run: |
-          git apply --check ios-autosync.patch
-          git apply ios-autosync.patch
-
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
