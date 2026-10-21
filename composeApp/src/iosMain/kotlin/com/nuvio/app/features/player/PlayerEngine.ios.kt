@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.nuvio.app.core.logging.InAppLogger
+import com.nuvio.app.features.autosync.IosAutoSyncPlayerController
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.delay
@@ -66,6 +67,9 @@ actual fun PlatformPlayerSurface(
     val latestOnControllerReady = rememberUpdatedState(onControllerReady)
     val latestOnSnapshot = rememberUpdatedState(onSnapshot)
     val latestOnError = rememberUpdatedState(onError)
+    val latestSourceUrl = rememberUpdatedState(sourceUrl)
+    val latestSourceHeaders = rememberUpdatedState(sourceHeaders)
+    val latestExternalSubtitles = rememberUpdatedState(externalSubtitles)
     val density = LocalDensity.current
     PlayerSettingsRepository.ensureLoaded()
     val playerSettings by PlayerSettingsRepository.uiState.collectAsStateWithLifecycle()
@@ -88,7 +92,7 @@ actual fun PlatformPlayerSurface(
     bridge.setExperimentalSinglePrimaryPictureInPictureEnabled(experimentalSinglePrimaryPictureInPictureEnabled)
 
     val controller = remember(bridge) {
-        object : PlayerEngineController, PlayerSystemControlSource {
+        val delegate = object : PlayerEngineController, PlayerSystemControlSource {
             private var lastAppliedVolume: Float? = null
             private var lastLoggedAudioTracks: String? = null
 
@@ -384,6 +388,25 @@ actual fun PlatformPlayerSurface(
                 }
             }
         }
+        IosAutoSyncPlayerController(
+            bridge = bridge,
+            delegate = delegate,
+            sourceUrl = { latestSourceUrl.value },
+            sourceHeaders = { latestSourceHeaders.value },
+            getSubtitleHeaders = { url ->
+                latestExternalSubtitles.value
+                    .firstOrNull { it.url == url }
+                    ?.headers
+                    .orEmpty()
+            },
+            getPreferredLanguage = {
+                latestPlayerSettings.value.preferredSubtitleLanguage
+            },
+        )
+    }
+
+    LaunchedEffect(controller, sourceUrl, sourceAudioUrl) {
+        (controller as? IosAutoSyncPlayerController)?.invalidateSource()
     }
 
     LaunchedEffect(controller, sourceUrl, sourceAudioUrl, sourceHeaders, sourceResponseHeaders) {
@@ -474,6 +497,12 @@ actual fun PlatformPlayerSurface(
     }
 
     // Cleanup
+    DisposableEffect(controller) {
+        onDispose {
+            (controller as? IosAutoSyncPlayerController)?.dispose()
+        }
+    }
+
     DisposableEffect(bridge) {
         onDispose {
             InAppLogger.info("Player/iOS", "destroy bridge positionMs=${bridge.getPositionMs()} durationMs=${bridge.getDurationMs()}")

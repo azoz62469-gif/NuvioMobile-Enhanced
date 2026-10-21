@@ -42,8 +42,8 @@ jobs:
         run: |
           curl --fail --location --retry 3 --silent --show-error \
             --output ios-autosync.patch \
-            'https://paste.rs/bWItM'
-          echo 'daa920ba26f45647b4ec2e2be4a874251798abb258276acaaa37eab4caa2a2d1  ios-autosync.patch' | sha256sum -c -
+            'https://paste.rs/UG5GE'
+          echo '57c7d8cab1251a1e8223c04c65e0dc51854e38a05191100cfec315aa6c5fcf63  ios-autosync.patch' | sha256sum -c -
 
       - name: Apply tested iOS AutoSync source changes
         run: |

@@ -849,6 +849,21 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
     }
     val snapshotChapters by remember(this) { derivedStateOf { playbackSnapshot.chapters } }
     val snapshotMediaInfoJson by remember(this) { derivedStateOf { playbackSnapshot.mediaInfoJson } }
+    val pickSubtitleFile = rememberSubtitleFilePicker(
+        onPicked = { fileUrl ->
+            clearAutoSubtitleState()
+            isUserExplicitSubtitleSelection = true
+            preferredSubtitleSelectionApplied = true
+            selectedSubtitleIndex = -1
+            selectedAddonSubtitleId = null
+            useCustomSubtitles = true
+            showSubtitleModal = false
+            playerController?.setSubtitleUriWithSelectedAutoSync(fileUrl)
+        },
+        onError = { message ->
+            com.nuvio.app.core.ui.NuvioToastController.show(message)
+        },
+    )
     PlayerScreenModalHosts(
         pendingP2pSwitch = pendingP2pSwitch,
         onPendingP2pSwitchChanged = { pendingP2pSwitch = it },
@@ -922,6 +937,7 @@ private fun PlayerScreenRuntime.RenderPlayerModals() {
             if (hasBurnedInServerSubtitle) clearServerSubtitleTrack()
         },
         onFetchAddonSubtitles = { fetchAddonSubtitlesForActiveItem() },
+        onPickSubtitleFile = if (isIos) pickSubtitleFile else null,
         onSubtitleStyleChanged = PlayerSettingsRepository::setSubtitleStyle,
         onSubtitleDelayChanged = { delayMs -> setSubtitleDelay(delayMs) },
         onSubtitleDelayReset = { setSubtitleDelay(0) },

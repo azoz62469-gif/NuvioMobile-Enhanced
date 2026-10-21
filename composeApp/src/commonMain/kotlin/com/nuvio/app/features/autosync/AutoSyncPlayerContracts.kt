@@ -4,12 +4,14 @@ internal data class AutoSyncSubtitleCandidate(
     val url: String,
     val language: String,
     val name: String? = null,
+    val addonName: String? = null,
+    val sourceName: String? = null,
+    val videoContextKey: String? = null,
+    val seasonNumber: Int? = null,
+    val episodeNumber: Int? = null,
 )
 
-/**
- * Optional Android AutoSync capability layered beside PlayerEngineController.
- * Other platforms do not need to implement it.
- */
+/** Optional AutoSync capability layered beside a platform player controller. */
 internal interface AutoSyncPlayerController {
     fun cancelForManualSubtitleDelay()
     fun setAutoSyncSubtitleCandidates(candidates: List<AutoSyncSubtitleCandidate>)

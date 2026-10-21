@@ -19,6 +19,7 @@ internal fun StreamSubtitle.toAddonSubtitle(): AddonSubtitle = AddonSubtitle(
     language = language,
     display = name?.takeIf { it.isNotBlank() } ?: language,
     addonName = name,
+    sourceName = name,
 )
 
 internal fun mergeStreamAndAddonSubtitles(

@@ -6,7 +6,6 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.features.autosync.AutoSyncPreferencesRepository
 import com.nuvio.app.features.player.SubtitleLanguageOption
-import com.nuvio.app.isIos
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.settings_playback_auto_sync_mode_aggressive
 import nuvio.composeapp.generated.resources.settings_playback_auto_sync_mode_aggressive_description
@@ -16,6 +15,8 @@ import nuvio.composeapp.generated.resources.settings_playback_auto_sync_toleranc
 import nuvio.composeapp.generated.resources.settings_playback_auto_sync_tolerance_description
 import nuvio.composeapp.generated.resources.settings_playback_auto_sync_tolerance_off
 import nuvio.composeapp.generated.resources.settings_playback_auto_sync_tolerance_value
+import nuvio.composeapp.generated.resources.settings_playback_audio_fallback
+import nuvio.composeapp.generated.resources.settings_playback_audio_fallback_description
 import nuvio.composeapp.generated.resources.settings_playback_subtitle_auto_sync
 import nuvio.composeapp.generated.resources.settings_playback_subtitle_auto_sync_description
 import org.jetbrains.compose.resources.stringResource
@@ -38,8 +39,10 @@ internal fun AutoSyncPlaybackSettingsRows(
         AutoSyncPreferencesRepository.ensureLoaded()
         AutoSyncPreferencesRepository.syncToleranceMs
     }.collectAsStateWithLifecycle()
-    if (isIos) return
-
+    val audioFallbackEnabled by remember {
+        AutoSyncPreferencesRepository.ensureLoaded()
+        AutoSyncPreferencesRepository.audioFallbackEnabled
+    }.collectAsStateWithLifecycle()
     val preferredLanguageAvailable =
         preferredSubtitleLanguage.isNotBlank() &&
             preferredSubtitleLanguage != SubtitleLanguageOption.NONE &&
@@ -56,6 +59,17 @@ internal fun AutoSyncPlaybackSettingsRows(
         onCheckedChange = AutoSyncPreferencesRepository::setPreferredSubtitleAutoSyncOnStart,
     )
     if (!preferredSubtitleAutoSyncOnStart) return
+    SettingsGroupDivider(isTablet = isTablet)
+    SettingsSwitchRow(
+        title = stringResource(Res.string.settings_playback_audio_fallback),
+        description = stringResource(
+            Res.string.settings_playback_audio_fallback_description,
+        ),
+        checked = audioFallbackEnabled,
+        enabled = enabled,
+        isTablet = isTablet,
+        onCheckedChange = AutoSyncPreferencesRepository::setAudioFallbackEnabled,
+    )
     SettingsGroupDivider(isTablet = isTablet)
     SettingsSwitchRow(
         title = stringResource(

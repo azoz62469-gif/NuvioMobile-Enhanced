@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Nuvio's general PlayerSettingsRepository/PlayerSettingsStorage architecture.
  */
 internal object AutoSyncPreferencesRepository {
-    private val _preferredSubtitleAutoSyncOnStart = MutableStateFlow(false)
+    private val _preferredSubtitleAutoSyncOnStart = MutableStateFlow(true)
     val preferredSubtitleAutoSyncOnStart: StateFlow<Boolean> =
         _preferredSubtitleAutoSyncOnStart.asStateFlow()
 
@@ -25,6 +25,9 @@ internal object AutoSyncPreferencesRepository {
     private val _syncToleranceMs = MutableStateFlow(0)
     val syncToleranceMs: StateFlow<Int> = _syncToleranceMs.asStateFlow()
 
+    private val _audioFallbackEnabled = MutableStateFlow(true)
+    val audioFallbackEnabled: StateFlow<Boolean> = _audioFallbackEnabled.asStateFlow()
+
     private var loadedProfileId: Int? = null
     private var loadPersistedValue: (() -> Boolean?)? = null
     private var savePersistedValue: ((Boolean) -> Unit)? = null
@@ -32,6 +35,8 @@ internal object AutoSyncPreferencesRepository {
     private var saveAggressiveModePersistedValue: ((Boolean) -> Unit)? = null
     private var loadSyncTolerancePersistedValue: (() -> Int?)? = null
     private var saveSyncTolerancePersistedValue: ((Int) -> Unit)? = null
+    private var loadAudioFallbackPersistedValue: (() -> Boolean?)? = null
+    private var saveAudioFallbackPersistedValue: ((Boolean) -> Unit)? = null
     private var lastStartupSessionKey: Int? = null
     private var lastStartupPlaybackKey: String? = null
 
@@ -42,6 +47,8 @@ internal object AutoSyncPreferencesRepository {
         saveAggressiveMode: (Boolean) -> Unit = {},
         loadSyncToleranceMs: () -> Int? = { null },
         saveSyncToleranceMs: (Int) -> Unit = {},
+        loadAudioFallback: () -> Boolean? = { null },
+        saveAudioFallback: (Boolean) -> Unit = {},
     ) {
         loadPersistedValue = load
         savePersistedValue = save
@@ -49,6 +56,8 @@ internal object AutoSyncPreferencesRepository {
         saveAggressiveModePersistedValue = saveAggressiveMode
         loadSyncTolerancePersistedValue = loadSyncToleranceMs
         saveSyncTolerancePersistedValue = saveSyncToleranceMs
+        loadAudioFallbackPersistedValue = loadAudioFallback
+        saveAudioFallbackPersistedValue = saveAudioFallback
         loadedProfileId = null
     }
 
@@ -56,10 +65,11 @@ internal object AutoSyncPreferencesRepository {
         val profileId = ProfileRepository.activeProfileId
         if (loadedProfileId == profileId) return
 
-        _preferredSubtitleAutoSyncOnStart.value = loadPersistedValue?.invoke() ?: false
+        _preferredSubtitleAutoSyncOnStart.value = loadPersistedValue?.invoke() ?: true
         _aggressiveMode.value = loadAggressiveModePersistedValue?.invoke() ?: true
         _syncToleranceMs.value = loadSyncTolerancePersistedValue?.invoke()
             ?.takeIf { it in syncToleranceOptionsMs } ?: 0
+        _audioFallbackEnabled.value = loadAudioFallbackPersistedValue?.invoke() ?: true
         loadedProfileId = profileId
         lastStartupSessionKey = null
         lastStartupPlaybackKey = null
@@ -86,10 +96,26 @@ internal object AutoSyncPreferencesRepository {
         saveSyncTolerancePersistedValue?.invoke(toleranceMs)
     }
 
+    fun setAudioFallbackEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (_audioFallbackEnabled.value == enabled) return
+        _audioFallbackEnabled.value = enabled
+        saveAudioFallbackPersistedValue?.invoke(enabled)
+    }
+
     fun claimStartupRun(sessionKey: Int, playbackKey: String): Boolean {
         ensureLoaded()
-        if (!_preferredSubtitleAutoSyncOnStart.value) return false
-        if (lastStartupSessionKey == sessionKey && lastStartupPlaybackKey == playbackKey) return false
+        if (
+            !shouldClaimAutoSyncStartupRun(
+                enabled = _preferredSubtitleAutoSyncOnStart.value,
+                lastSessionKey = lastStartupSessionKey,
+                lastPlaybackKey = lastStartupPlaybackKey,
+                sessionKey = sessionKey,
+                playbackKey = playbackKey,
+            )
+        ) {
+            return false
+        }
 
         lastStartupSessionKey = sessionKey
         lastStartupPlaybackKey = playbackKey

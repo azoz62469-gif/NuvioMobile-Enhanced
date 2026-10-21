@@ -71,6 +71,26 @@ interface NuvioPlayerBridge {
     fun applyAudioLanguagePreferences(languages: List<String>)
     fun selectSubtitleTrack(trackId: Int)
     fun setSubtitleUrl(url: String)
+    /**
+     * Returns JSON containing the text-subtitle timelines embedded in the current media source.
+     * The callback always runs on the main queue, with an empty array when nothing is usable.
+     */
+    fun loadEmbeddedSubtitleReferences(
+        sourceUrl: String,
+        headersJson: String?,
+        completion: (String) -> Unit,
+    )
+    fun cancelEmbeddedSubtitleReferenceLoad()
+    /**
+     * Returns JSON containing speech-activity cues detected in the current media audio.
+     * The callback always runs on the main queue.
+     */
+    fun analyzeAudioSpeechReferences(
+        sourceUrl: String,
+        headersJson: String?,
+        completion: (String) -> Unit,
+    )
+    fun cancelAudioSpeechReferenceAnalysis()
     fun clearExternalSubtitle()
     fun clearExternalSubtitleAndSelect(trackId: Int)
     fun setSubtitleDelayMs(delayMs: Int)

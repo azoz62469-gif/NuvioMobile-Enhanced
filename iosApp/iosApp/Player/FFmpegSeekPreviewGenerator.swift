@@ -370,3 +370,706 @@ final class FFmpegSeekPreviewGeneratorCreator: NSObject, NuvioSeekPreviewGenerat
         FFmpegSeekPreviewGenerator(url: url, headers: headers)
     }
 }
+
+// MARK: - Embedded subtitle timing references
+
+/**
+ * Demuxes subtitle packet timestamps without decoding pictures or text. Auto Sync only compares
+ * cue timing, so this stays independent from mpv's active subtitle selection and rendering.
+ */
+final class FFmpegEmbeddedSubtitleReferenceLoader {
+    private let url: String
+    private let headers: [String: String]
+    private let abortFlag = EmbeddedSubtitleAbortFlag()
+    private var openFailureReason: String?
+
+    private static let ioTimeoutMicroseconds = "15000000"
+    private static let loadTimeoutSeconds = 45.0
+    private static let maxCuesPerTrack = 4_000
+    private static let eofErrorCode: Int32 = -541_478_725
+
+    init(url: String, headers: [String: String]) {
+        self.url = url
+        self.headers = headers
+    }
+
+    func cancel() {
+        abortFlag.set(reason: "cancelled")
+    }
+
+    func load() -> String {
+        let flag = abortFlag
+        let timeout = DispatchWorkItem { flag.set(reason: "timeout") }
+        DispatchQueue.global(qos: .utility).asyncAfter(
+            deadline: .now() + Self.loadTimeoutSeconds,
+            execute: timeout
+        )
+        defer { timeout.cancel() }
+
+        guard let context = openInput() else {
+            return diagnosticPayload(reason: openFailureReason ?? "open_failed")
+        }
+        var contextPointer: UnsafeMutablePointer<AVFormatContext>? = context
+        defer { avformat_close_input(&contextPointer) }
+
+        var subtitleStreamCount = 0
+        var subtitleStreams: [(index: Int32, key: String)] = []
+        for index in 0..<Int32(context.pointee.nb_streams) {
+            guard let stream = context.pointee.streams[Int(index)] else { continue }
+            guard let parameters = stream.pointee.codecpar,
+                  parameters.pointee.codec_type == AVMEDIA_TYPE_SUBTITLE else {
+                stream.pointee.discard = AVDISCARD_ALL
+                continue
+            }
+            subtitleStreamCount += 1
+            let name = codecName(parameters.pointee.codec_id).lowercased()
+            let isBitmap = ["pgs", "dvd", "dvb", "xsub", "teletext"].contains {
+                name.contains($0)
+            }
+            // Forced tracks only carry signs and songs, so they cannot validate a full
+            // dialogue subtitle against the video timeline.
+            let isForced = (stream.pointee.disposition & 64) != 0
+            if isBitmap || isForced {
+                stream.pointee.discard = AVDISCARD_ALL
+                continue
+            }
+            subtitleStreams.append((index: index, key: "embedded:\(index)"))
+        }
+        guard !subtitleStreams.isEmpty else {
+            return diagnosticPayload(
+                reason: subtitleStreamCount == 0
+                    ? "no_subtitle_streams"
+                    : "no_dialogue_text_streams",
+                subtitleStreamCount: subtitleStreamCount,
+                candidateStreamCount: subtitleStreams.count
+            )
+        }
+        guard let packet = av_packet_alloc() else {
+            return diagnosticPayload(
+                reason: "packet_alloc_failed",
+                subtitleStreamCount: subtitleStreamCount,
+                candidateStreamCount: subtitleStreams.count
+            )
+        }
+        var packetPointer: UnsafeMutablePointer<AVPacket>? = packet
+        defer { av_packet_free(&packetPointer) }
+
+        var timings: [Int32: [(Int64, Int64)]] = [:]
+        var streamLookup = Dictionary(
+            uniqueKeysWithValues: subtitleStreams.map { ($0.index, $0.key) }
+        )
+        var sampledStreams = Set<Int32>()
+        var missingDurationSampling = false
+        var cueLimitSampling = false
+        var reachedEOF = false
+        var packetsRead: Int64 = 0
+        while !abortFlag.isSet {
+            let readResult = av_read_frame(context, packet)
+            if readResult < 0 {
+                reachedEOF = readResult == Self.eofErrorCode
+                break
+            }
+            packetsRead += 1
+
+            let streamIndex = packet.pointee.stream_index
+            if streamLookup[streamIndex] != nil,
+               let stream = context.pointee.streams[Int(streamIndex)] {
+                let timestamp = packet.pointee.pts != Int64.min
+                    ? packet.pointee.pts
+                    : packet.pointee.dts
+                if timestamp != Int64.min {
+                    let timeBase = stream.pointee.time_base
+                    let milliseconds = AVRational(num: 1, den: 1_000)
+                    let startMs = av_rescale_q(timestamp, timeBase, milliseconds)
+                    let hasDuration = packet.pointee.duration > 0
+                    let durationMs = hasDuration
+                        ? av_rescale_q(packet.pointee.duration, timeBase, milliseconds)
+                        : 1
+                    if startMs >= 0 {
+                        if !hasDuration {
+                            sampledStreams.insert(streamIndex)
+                            missingDurationSampling = true
+                        }
+                        let count = timings[streamIndex]?.count ?? 0
+                        if count >= Self.maxCuesPerTrack {
+                            sampledStreams.insert(streamIndex)
+                            cueLimitSampling = true
+                        } else {
+                            timings[streamIndex, default: []].append(
+                                (startMs, max(startMs + 1, startMs + durationMs))
+                            )
+                        }
+                    }
+                }
+            }
+            av_packet_unref(packet)
+            if sampledStreams.count == subtitleStreams.count { break }
+        }
+
+        let tracks: [[String: Any]] = subtitleStreams.compactMap { stream in
+            let cues = Self.normalized(timings[stream.index] ?? [])
+            guard !cues.isEmpty else { return nil }
+            let sampled = !reachedEOF || abortFlag.isSet || sampledStreams.contains(stream.index)
+            return [
+                "key": stream.key,
+                "label": "Embedded \(stream.index)",
+                "sampled": sampled,
+                "cues": cues.map { ["startMs": $0.0, "endMs": $0.1] }
+            ]
+        }
+        streamLookup.removeAll()
+        let reason: String
+        if abortFlag.isSet {
+            reason = abortFlag.reason ?? "aborted"
+        } else if cueLimitSampling {
+            reason = "sampled_cue_limit"
+        } else if missingDurationSampling {
+            reason = "sampled_missing_duration"
+        } else if !reachedEOF {
+            reason = "read_error"
+        } else if tracks.isEmpty {
+            reason = "no_timed_subtitle_packets"
+        } else if tracks.contains(where: { ($0["sampled"] as? Bool) == true }) {
+            reason = "sampled"
+        } else {
+            reason = "ok"
+        }
+        return encode(
+            tracks: tracks,
+            reason: reason,
+            subtitleStreamCount: subtitleStreamCount,
+            candidateStreamCount: subtitleStreams.count,
+            packetsRead: packetsRead,
+            reachedEOF: reachedEOF
+        )
+    }
+
+    private func openInput() -> UnsafeMutablePointer<AVFormatContext>? {
+        guard let context = avformat_alloc_context() else {
+            openFailureReason = "context_alloc_failed"
+            return nil
+        }
+        context.pointee.interrupt_callback.callback = { opaque in
+            guard let opaque else { return 0 }
+            return Unmanaged<EmbeddedSubtitleAbortFlag>
+                .fromOpaque(opaque)
+                .takeUnretainedValue()
+                .isSet ? 1 : 0
+        }
+        context.pointee.interrupt_callback.opaque =
+            Unmanaged.passUnretained(abortFlag).toOpaque()
+
+        var options: OpaquePointer?
+        defer { av_dict_free(&options) }
+        _ = av_dict_set(&options, "rw_timeout", Self.ioTimeoutMicroseconds, 0)
+        _ = av_dict_set(&options, "extension_picky", "0", 0)
+        var headerLines = ""
+        for (name, value) in headers {
+            if name.caseInsensitiveCompare("User-Agent") == .orderedSame {
+                _ = av_dict_set(&options, "user_agent", value, 0)
+            } else {
+                headerLines += "\(name): \(value)\r\n"
+            }
+        }
+        if !headerLines.isEmpty {
+            _ = av_dict_set(&options, "headers", headerLines, 0)
+        }
+
+        var contextPointer: UnsafeMutablePointer<AVFormatContext>? = context
+        let result = avformat_open_input(&contextPointer, inputPath(), nil, &options)
+        guard result >= 0, let opened = contextPointer else {
+            openFailureReason = "open_failed"
+            return nil
+        }
+        _ = avformat_find_stream_info(opened, nil)
+        return opened
+    }
+
+    private func inputPath() -> String {
+        if let parsed = URL(string: url), parsed.isFileURL {
+            return parsed.path
+        }
+        return url
+    }
+
+    private func codecName(_ codecId: AVCodecID) -> String {
+        guard let descriptor = avcodec_descriptor_get(codecId),
+              let name = descriptor.pointee.name else {
+            return ""
+        }
+        return String(cString: name)
+    }
+
+    private static func normalized(_ cues: [(Int64, Int64)]) -> [(Int64, Int64)] {
+        let sorted = cues.sorted {
+            $0.0 == $1.0 ? $0.1 < $1.1 : $0.0 < $1.0
+        }
+        var result: [(Int64, Int64)] = []
+        for cue in sorted {
+            if result.last?.0 == cue.0 && result.last?.1 == cue.1 { continue }
+            if result.count >= maxCuesPerTrack { break }
+            result.append(cue)
+        }
+        return result
+    }
+
+    private func encode(
+        tracks: [[String: Any]],
+        reason: String,
+        subtitleStreamCount: Int,
+        candidateStreamCount: Int,
+        packetsRead: Int64,
+        reachedEOF: Bool
+    ) -> String {
+        guard
+            let data = try? JSONSerialization.data(withJSONObject: [
+                "tracks": tracks,
+                "reason": reason,
+                "subtitleStreams": subtitleStreamCount,
+                "candidateStreams": candidateStreamCount,
+                "packetsRead": packetsRead,
+                "reachedEof": reachedEOF,
+            ]),
+            let json = String(data: data, encoding: .utf8)
+        else {
+            return "{\"tracks\":[],\"reason\":\"encode_failed\",\"subtitleStreams\":\(subtitleStreamCount),\"candidateStreams\":\(candidateStreamCount),\"packetsRead\":\(packetsRead),\"reachedEof\":\(reachedEOF)}"
+        }
+        return json
+    }
+
+    private func diagnosticPayload(
+        reason: String,
+        subtitleStreamCount: Int = 0,
+        candidateStreamCount: Int = 0,
+        packetsRead: Int64 = 0,
+        reachedEOF: Bool = false
+    ) -> String {
+        encode(
+            tracks: [],
+            reason: reason,
+            subtitleStreamCount: subtitleStreamCount,
+            candidateStreamCount: candidateStreamCount,
+            packetsRead: packetsRead,
+            reachedEOF: reachedEOF
+        )
+    }
+}
+
+private final class EmbeddedSubtitleAbortFlag {
+    private let lock = NSLock()
+    private var value = false
+    private var abortReason: String?
+
+    var isSet: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    var reason: String? {
+        lock.lock()
+        defer { lock.unlock() }
+        return abortReason
+    }
+
+    func set(reason: String) {
+        lock.lock()
+        if !value {
+            value = true
+            abortReason = reason
+        }
+        lock.unlock()
+    }
+}
+
+/**
+ * Decodes a bounded prefix of the selected audio stream and converts short-time energy into
+ * speech-activity cues. The cues are only a timing reference: Kotlin's existing confident
+ * alignment gates decide whether the subtitle may be moved.
+ */
+final class FFmpegAudioSpeechReferenceLoader {
+    private let url: String
+    private let headers: [String: String]
+    private let abortFlag = AudioSpeechAbortFlag()
+
+    private static let frameMs = 32
+    private static let maxAnalysisMs: Int64 = 8 * 60 * 1_000
+    private static let maxWallSeconds = 75.0
+    private static let ioTimeoutMicroseconds = "15000000"
+
+    init(url: String, headers: [String: String]) {
+        self.url = url
+        self.headers = headers
+    }
+
+    func cancel() {
+        abortFlag.set()
+    }
+
+    func load() -> String {
+        let started = DispatchTime.now().uptimeNanoseconds
+        guard let context = openInput() else {
+            return payload(reason: "open_failed")
+        }
+        var contextPointer: UnsafeMutablePointer<AVFormatContext>? = context
+        defer { avformat_close_input(&contextPointer) }
+
+        var streamIndex = av_find_best_stream(
+            context,
+            AVMEDIA_TYPE_AUDIO,
+            -1,
+            -1,
+            nil,
+            0
+        )
+        if streamIndex < 0 {
+            _ = avformat_find_stream_info(context, nil)
+            streamIndex = av_find_best_stream(
+                context,
+                AVMEDIA_TYPE_AUDIO,
+                -1,
+                -1,
+                nil,
+                0
+            )
+        }
+        guard
+            streamIndex >= 0,
+            let stream = context.pointee.streams[Int(streamIndex)],
+            let parameters = stream.pointee.codecpar,
+            let decoder = avcodec_find_decoder(parameters.pointee.codec_id),
+            let decoderContext = avcodec_alloc_context3(decoder)
+        else {
+            return payload(reason: "no_audio_stream")
+        }
+        var decoderPointer: UnsafeMutablePointer<AVCodecContext>? = decoderContext
+        defer { avcodec_free_context(&decoderPointer) }
+        guard avcodec_parameters_to_context(decoderContext, parameters) >= 0 else {
+            return payload(reason: "decoder_parameters_rejected")
+        }
+        guard avcodec_open2(decoderContext, decoder, nil) >= 0 else {
+            return payload(reason: "decoder_open_failed")
+        }
+
+        for index in 0..<Int(context.pointee.nb_streams) where index != Int(streamIndex) {
+            context.pointee.streams[index]?.pointee.discard = AVDISCARD_ALL
+        }
+        guard let packet = av_packet_alloc(), let frame = av_frame_alloc() else {
+            return payload(reason: "allocation_failed")
+        }
+        var packetPointer: UnsafeMutablePointer<AVPacket>? = packet
+        var framePointer: UnsafeMutablePointer<AVFrame>? = frame
+        defer {
+            av_packet_free(&packetPointer)
+            av_frame_free(&framePointer)
+        }
+
+        let timeBase = stream.pointee.time_base
+        var bucketEnergy: [Int: Double] = [:]
+        var bucketCount: [Int: Int] = [:]
+        var fallbackMediaMs: Int64 = 0
+        var reachedLimit = false
+        var packetsRead: Int64 = 0
+
+        while !abortFlag.isSet {
+            let elapsed = Double(
+                DispatchTime.now().uptimeNanoseconds - started
+            ) / 1_000_000_000.0
+            if elapsed >= Self.maxWallSeconds || fallbackMediaMs >= Self.maxAnalysisMs {
+                reachedLimit = true
+                break
+            }
+
+            let readResult = av_read_frame(context, packet)
+            if readResult < 0 {
+                break
+            }
+            packetsRead += 1
+            guard packet.pointee.stream_index == streamIndex else {
+                av_packet_unref(packet)
+                continue
+            }
+
+            let sent = avcodec_send_packet(decoderContext, packet)
+            av_packet_unref(packet)
+            if sent < 0 {
+                continue
+            }
+            while avcodec_receive_frame(decoderContext, frame) >= 0 {
+                let sampleRate = max(1, Int(frame.pointee.sample_rate))
+                let samples = max(0, Int(frame.pointee.nb_samples))
+                let durationMs = Int64(
+                    (Double(samples) * 1_000.0 / Double(sampleRate)).rounded()
+                )
+                let frameTimestamp = frame.pointee.best_effort_timestamp
+                let startMs: Int64
+                if frameTimestamp != Int64.min {
+                    startMs = av_rescale_q(
+                        frameTimestamp,
+                        timeBase,
+                        AVRational(num: 1, den: 1_000)
+                    )
+                } else {
+                    startMs = fallbackMediaMs
+                }
+                fallbackMediaMs = max(fallbackMediaMs, startMs) + max(1, durationMs)
+
+                if let energy = AudioFrameEnergy.measure(frame: frame) {
+                    let bucket = max(0, Int(startMs / Int64(Self.frameMs)))
+                    if bucketEnergy[bucket] == nil || energy.meanSquare > (bucketEnergy[bucket] ?? 0) {
+                        bucketEnergy[bucket] = energy.meanSquare
+                        bucketCount[bucket] = energy.samples
+                    }
+                }
+                av_frame_unref(frame)
+                if fallbackMediaMs >= Self.maxAnalysisMs {
+                    reachedLimit = true
+                    break
+                }
+            }
+            if reachedLimit {
+                break
+            }
+        }
+        _ = avcodec_send_packet(decoderContext, nil)
+        while avcodec_receive_frame(decoderContext, frame) >= 0 {
+            let timestamp = frame.pointee.best_effort_timestamp
+            if let energy = AudioFrameEnergy.measure(frame: frame),
+               timestamp != Int64.min {
+                let startMs = av_rescale_q(
+                    timestamp,
+                    timeBase,
+                    AVRational(num: 1, den: 1_000)
+                )
+                let bucket = max(0, Int(startMs / Int64(Self.frameMs)))
+                bucketEnergy[bucket] = max(bucketEnergy[bucket] ?? 0, energy.meanSquare)
+                bucketCount[bucket] = energy.samples
+            }
+            av_frame_unref(frame)
+        }
+
+        let cues = speechCues(from: bucketEnergy, canceled: abortFlag.isSet)
+        return payload(
+            cues: cues,
+            reason: abortFlag.isSet ? "cancelled" : (reachedLimit ? "bounded_sample" : "ok"),
+            analyzedMs: fallbackMediaMs,
+            cueCount: cues.count,
+            packetsRead: packetsRead
+        )
+    }
+
+    private func speechCues(
+        from energies: [Int: Double],
+        canceled: Bool
+    ) -> [[String: Int64]] {
+        if canceled || energies.count < 100 {
+            return []
+        }
+        let dbValues = energies.values.map {
+            10.0 * log10(max($0, 1e-10))
+        }.sorted()
+        let floor = percentile(dbValues, fraction: 0.20)
+        let loud = percentile(dbValues, fraction: 0.85)
+        let threshold = max(floor + 9.0, loud - 14.0, -58.0)
+        let sortedBuckets = energies.keys.sorted()
+        guard let first = sortedBuckets.first, let last = sortedBuckets.last else {
+            return []
+        }
+
+        var rawRuns: [(Int, Int)] = []
+        var runStart: Int?
+        var runEnd: Int?
+        for bucket in first...last {
+            let level = energies[bucket].map { 10.0 * log10(max($0, 1e-10)) } ?? -120.0
+            if level >= threshold {
+                if runStart == nil {
+                    runStart = bucket
+                }
+                runEnd = bucket + 1
+            } else if let start = runStart, let end = runEnd {
+                rawRuns.append((start, end))
+                runStart = nil
+                runEnd = nil
+            }
+        }
+        if let start = runStart, let end = runEnd {
+            rawRuns.append((start, end))
+        }
+
+        var merged: [(Int, Int)] = []
+        for run in rawRuns where run.1 - run.0 >= 4 {
+            if let previous = merged.last, run.0 - previous.1 <= 6 {
+                merged[merged.count - 1] = (previous.0, run.1)
+            } else {
+                merged.append(run)
+            }
+        }
+
+        return merged.prefix(1_500).compactMap { run in
+            let duration = run.1 - run.0
+            if duration < 4 {
+                return nil
+            }
+            return [
+                "startMs": Int64(run.0 * Self.frameMs),
+                "endMs": Int64(run.1 * Self.frameMs),
+            ]
+        }
+    }
+
+    private func percentile(_ sorted: [Double], fraction: Double) -> Double {
+        guard !sorted.isEmpty else { return -120.0 }
+        let index = min(
+            max(
+                0,
+                Int((Double(sorted.count - 1) * fraction).rounded())
+            ),
+            sorted.count - 1
+        )
+        return sorted[index]
+    }
+
+    private func openInput() -> UnsafeMutablePointer<AVFormatContext>? {
+        guard let context = avformat_alloc_context() else { return nil }
+        context.pointee.interrupt_callback.callback = { opaque in
+            guard let opaque else { return 0 }
+            return Unmanaged<AudioSpeechAbortFlag>
+                .fromOpaque(opaque)
+                .takeUnretainedValue()
+                .isSet ? 1 : 0
+        }
+        context.pointee.interrupt_callback.opaque =
+            Unmanaged.passUnretained(abortFlag).toOpaque()
+
+        var options: OpaquePointer?
+        defer { av_dict_free(&options) }
+        _ = av_dict_set(&options, "rw_timeout", Self.ioTimeoutMicroseconds, 0)
+        _ = av_dict_set(&options, "extension_picky", "0", 0)
+        _ = av_dict_set(&options, "allowed_extensions", "ALL", 0)
+        _ = av_dict_set(&options, "allowed_segment_extensions", "ALL", 0)
+        var headerLines = ""
+        for (name, value) in headers {
+            if name.caseInsensitiveCompare("User-Agent") == .orderedSame {
+                _ = av_dict_set(&options, "user_agent", value, 0)
+            } else {
+                headerLines += "\(name): \(value)\r\n"
+            }
+        }
+        if !headerLines.isEmpty {
+            _ = av_dict_set(&options, "headers", headerLines, 0)
+        }
+
+        let path: String
+        if let parsed = URL(string: url), parsed.isFileURL {
+            path = parsed.path
+        } else {
+            path = url
+        }
+        var contextPointer: UnsafeMutablePointer<AVFormatContext>? = context
+        guard avformat_open_input(&contextPointer, path, nil, &options) >= 0 else {
+            return nil
+        }
+        guard let opened = contextPointer else { return nil }
+        _ = avformat_find_stream_info(opened, nil)
+        return opened
+    }
+
+    private func payload(
+        cues: [[String: Int64]] = [],
+        reason: String,
+        analyzedMs: Int64 = 0,
+        cueCount: Int = 0,
+        packetsRead: Int64 = 0
+    ) -> String {
+        let object: [String: Any] = [
+            "cues": cues,
+            "reason": reason,
+            "analyzedMs": analyzedMs,
+            "cueCount": cueCount,
+            "packetsRead": packetsRead,
+        ]
+        guard
+            let data = try? JSONSerialization.data(withJSONObject: object),
+            let json = String(data: data, encoding: .utf8)
+        else {
+            return "{\"cues\":[],\"reason\":\"encode_failed\"}"
+        }
+        return json
+    }
+}
+
+private struct AudioFrameEnergy {
+    let meanSquare: Double
+    let samples: Int
+
+    static func measure(frame: UnsafeMutablePointer<AVFrame>) -> AudioFrameEnergy? {
+        let count = Int(frame.pointee.nb_samples)
+        let channels = max(1, Int(frame.pointee.ch_layout.nb_channels))
+        guard count > 0, let planes = frame.pointee.extended_data else { return nil }
+        let format = frame.pointee.format
+        var sum = 0.0
+        var measured = 0
+
+        func accumulateFloat(_ data: UnsafeMutablePointer<UInt8>, samples: Int) {
+            data.withMemoryRebound(to: Float.self, capacity: samples) { values in
+                for index in 0..<samples {
+                    let value = Double(values[index])
+                    if value.isFinite {
+                        sum += value * value
+                        measured += 1
+                    }
+                }
+            }
+        }
+
+        func accumulateInt16(_ data: UnsafeMutablePointer<UInt8>, samples: Int) {
+            data.withMemoryRebound(to: Int16.self, capacity: samples) { values in
+                for index in 0..<samples {
+                    let value = Double(values[index]) / 32768.0
+                    sum += value * value
+                    measured += 1
+                }
+            }
+        }
+
+        switch format {
+        case AV_SAMPLE_FMT_FLTP.rawValue:
+            for channel in 0..<channels {
+                guard let plane = planes[channel] else { continue }
+                accumulateFloat(plane, samples: count)
+            }
+        case AV_SAMPLE_FMT_FLT.rawValue:
+            guard let plane = planes[0] else { return nil }
+            accumulateFloat(plane, samples: count * channels)
+        case AV_SAMPLE_FMT_S16P.rawValue:
+            for channel in 0..<channels {
+                guard let plane = planes[channel] else { continue }
+                accumulateInt16(plane, samples: count)
+            }
+        case AV_SAMPLE_FMT_S16.rawValue:
+            guard let plane = planes[0] else { return nil }
+            accumulateInt16(plane, samples: count * channels)
+        default:
+            return nil
+        }
+        guard measured > 0 else { return nil }
+        return AudioFrameEnergy(meanSquare: sum / Double(measured), samples: measured)
+    }
+}
+
+private final class AudioSpeechAbortFlag {
+    private let lock = NSLock()
+    private var value = false
+
+    var isSet: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func set() {
+        lock.lock()
+        value = true
+        lock.unlock()
+    }
+}
