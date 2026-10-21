@@ -15,13 +15,13 @@ index 0000000..dbf5f89
 +): () -> Unit = {}
 diff --git a/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml b/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml
 new file mode 100644
-index 0000000..f67c596
+index 0000000..b3b0657
 --- /dev/null
 +++ b/composeApp/src/commonMain/composeResources/values-ar/autosync_strings.xml
 @@ -0,0 +1,13 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة (v12)</string>
++    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة (v13)</string>
 +    <string name="settings_playback_subtitle_auto_sync_description">زامن ترجمة الإضافة المفضلة تلقائيًا عند بدء التشغيل. يتطلب تحديد لغة ترجمة مفضلة.</string>
 +    <string name="settings_playback_auto_sync_mode_aggressive">بحث المزامنة: شامل</string>
 +    <string name="settings_playback_auto_sync_mode_aggressive_description">يواصل مقارنة الترجمات والمسارات المدمجة الأخرى للحصول على تطابق أدق قبل المزامنة. لا تُطبَّق إلا المطابقات الواثقة.</string>
@@ -34,10 +34,10 @@ index 0000000..f67c596
 +</resources>
 diff --git a/composeApp/src/commonMain/composeResources/values-ar/autosync_toast_strings.xml b/composeApp/src/commonMain/composeResources/values-ar/autosync_toast_strings.xml
 new file mode 100644
-index 0000000..db01206
+index 0000000..94eba37
 --- /dev/null
 +++ b/composeApp/src/commonMain/composeResources/values-ar/autosync_toast_strings.xml
-@@ -0,0 +1,10 @@
+@@ -0,0 +1,11 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string name="autosync_toast_failed">فشلت المزامنة: تعذّر مطابقة هذه الترجمة مع الفيديو.</string>
@@ -47,11 +47,21 @@ index 0000000..db01206
 +    <string name="autosync_subtitle_picker_failed_open">تعذّر فتح منتقي ملفات الترجمة.</string>
 +    <string name="autosync_subtitle_picker_failed_copy">تعذّر نسخ ملف الترجمة المحدد.</string>
 +    <string name="autosync_subtitle_picker_failed_read">تعذّر قراءة ملف الترجمة المحدد.</string>
++    <string name="autosync_toast_manual_fallback">تعذّر التحقق من المزامنة؛ أُبقيت الترجمة بتوقيتها الأصلي. استخدم «تأخير الترجمة» للضبط اليدوي.</string>
 +</resources>
 diff --git a/composeApp/src/commonMain/composeResources/values-ar/strings.xml b/composeApp/src/commonMain/composeResources/values-ar/strings.xml
-index bcf6258..223f791 100644
+index bcf6258..f90f15c 100644
 --- a/composeApp/src/commonMain/composeResources/values-ar/strings.xml
 +++ b/composeApp/src/commonMain/composeResources/values-ar/strings.xml
+@@ -322,7 +322,7 @@
+     <string name="collections_pinned">مثبّتة</string>
+     <string name="collections_tab_all">الكل</string>
+     <string name="collections_your_collections">مجموعاتك</string>
+-    <string name="compose_about_made_with">صنع بكل ❤️ بواسطة Tapframe والأصدقاء</string>
++    <string name="compose_about_made_with">صنع بكل ❤️ بواسطة Tapframe والأصدقاء\nMade by AZ OZ</string>
+     <string name="compose_about_version_format">الإصدار %1$s (%2$s)</string>
+     <string name="compose_action_off">معطل</string>
+     <string name="compose_action_on">مفعل</string>
 @@ -403,6 +403,7 @@
      <string name="compose_player_subs">الترجمات</string>
      <string name="compose_player_subtitle_delay">تأخير الترجمة</string>
@@ -68,33 +78,43 @@ index bcf6258..223f791 100644
 \ No newline at end of file
 +</resources>
 diff --git a/composeApp/src/commonMain/composeResources/values/autosync_strings.xml b/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
-index 31739af..0109b42 100644
+index 31739af..7e506d0 100644
 --- a/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
 +++ b/composeApp/src/commonMain/composeResources/values/autosync_strings.xml
 @@ -1,6 +1,6 @@
  <?xml version="1.0" encoding="utf-8"?>
  <resources>
 -    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle</string>
-+    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle (v12)</string>
++    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle (v13)</string>
      <string name="settings_playback_subtitle_auto_sync_description">Automatically sync the preferred add-on subtitle when playback starts. Requires a preferred subtitle language.</string>
      <string name="settings_playback_auto_sync_mode_aggressive">Auto Sync Search: Thorough</string>
      <string name="settings_playback_auto_sync_mode_aggressive_description">Keeps comparing other subtitles and embedded tracks for a closer match before syncing. Only confident matches are ever applied.</string>
 diff --git a/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml b/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml
-index 872c52d..ea742c8 100644
+index 872c52d..4d3b227 100644
 --- a/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml
 +++ b/composeApp/src/commonMain/composeResources/values/autosync_toast_strings.xml
-@@ -4,4 +4,7 @@
+@@ -4,4 +4,8 @@
      <string name="autosync_toast_failed_no_reference">Sync failed: No usable embedded subtitles to compare with.</string>
      <string name="autosync_toast_failed_unsupported">Sync failed: This subtitle format is not supported.</string>
      <string name="autosync_label_synced">Auto synced</string>
 +    <string name="autosync_subtitle_picker_failed_open">Unable to open the subtitle file picker.</string>
 +    <string name="autosync_subtitle_picker_failed_copy">Unable to copy the selected subtitle file.</string>
 +    <string name="autosync_subtitle_picker_failed_read">Unable to read the selected subtitle file.</string>
++    <string name="autosync_toast_manual_fallback">Sync could not be verified. The original subtitle timing was kept; use Subtitle Delay to adjust it manually.</string>
  </resources>
 diff --git a/composeApp/src/commonMain/composeResources/values/strings.xml b/composeApp/src/commonMain/composeResources/values/strings.xml
-index 566e3ee..f1b658d 100644
+index 566e3ee..2584cf5 100644
 --- a/composeApp/src/commonMain/composeResources/values/strings.xml
 +++ b/composeApp/src/commonMain/composeResources/values/strings.xml
+@@ -341,7 +341,7 @@
+     <string name="collections_pinned">Pinned</string>
+     <string name="collections_tab_all">All</string>
+     <string name="collections_your_collections">Your Collections</string>
+-    <string name="compose_about_made_with">Made with ❤️ by Tapframe and friends</string>
++    <string name="compose_about_made_with">Made with ❤️ by Tapframe and friends\nMade by AZ OZ</string>
+     <string name="compose_about_version_format">Version %1$s (%2$s)</string>
+     <string name="compose_action_off">Off</string>
+     <string name="compose_action_on">On</string>
 @@ -488,6 +488,7 @@
      <string name="compose_player_sync_by_ear_waiting_saw">Heard captured. Tap Saw when its subtitle shows.</string>
      <string name="compose_player_sync_by_ear_waiting_heard">Saw captured. Tap Heard when you hear the line.</string>
@@ -103,12 +123,348 @@ index 566e3ee..f1b658d 100644
      <string name="compose_player_text_opacity">Text Opacity</string>
      <string name="compose_player_brightness_level">Brightness %1$s</string>
      <string name="compose_player_volume_level">Volume %1$s</string>
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncAddonReferencePolicy.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncAddonReferencePolicy.kt
+new file mode 100644
+index 0000000..64c9123
+--- /dev/null
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncAddonReferencePolicy.kt
+@@ -0,0 +1,330 @@
++package com.nuvio.app.features.autosync
++
++/**
++ * A text subtitle can be used as a reference only when the app has proof that it belongs to the
++ * same episode and an identifiable release version as the video. Timing similarity by itself is
++ * never treated as proof that a subtitle matches the playing video.
++ */
++internal object AutoSyncAddonReferencePolicy {
++    internal data class RankedReference(
++        val candidate: AutoSyncSubtitleCandidate,
++        val versionEvidence: Set<String>,
++        val sameAddon: Boolean,
++        val exactRelease: Boolean,
++    )
++
++    fun rankTrustedCandidates(
++        selected: AutoSyncSubtitleCandidate,
++        candidates: List<AutoSyncSubtitleCandidate>,
++        videoSourceUrl: String,
++    ): List<RankedReference> {
++        val videoFileName = videoSourceUrl
++            .substringBefore('?')
++            .substringBefore('#')
++            .substringAfterLast('/')
++        val videoRelease = releaseFacts(videoFileName)
++        if (videoRelease.coreTokens.isEmpty()) return emptyList()
++
++        return candidates
++            .asSequence()
++            .filter { it.url.isNotBlank() && it.url != selected.url }
++            .filter { sameEpisode(selected, it, videoSourceUrl) }
++            .mapNotNull { candidate ->
++                val candidateName = candidate.sourceName ?: candidate.name ?: return@mapNotNull null
++                val trusted = trustedReleaseMatch(
++                    reference = releaseFacts(candidateName),
++                    video = videoRelease,
++                ) ?: return@mapNotNull null
++                RankedReference(
++                    candidate = candidate,
++                    versionEvidence = trusted.evidence,
++                    sameAddon = selected.addonName?.equals(
++                        candidate.addonName,
++                        ignoreCase = true,
++                    ) == true,
++                    exactRelease = trusted.exact,
++                )
++            }
++            .sortedWith(
++                compareByDescending<RankedReference> { it.exactRelease }
++                    .thenByDescending { it.versionEvidence.size }
++                    .thenByDescending { it.sameAddon }
++                    .thenByDescending {
++                        !it.candidate.language.equals(selected.language, ignoreCase = true)
++                    }
++                    .thenBy { it.candidate.language }
++                    .thenBy { it.candidate.url },
++            )
++            .toList()
++    }
++
++    /** The fallback applies only when no embedded video-timed reference exists. */
++    fun shouldUseTextFallback(
++        embeddedReferences: List<AutoSyncReferenceTimeline>,
++        rankedReferences: List<RankedReference>,
++    ): Boolean = embeddedReferences.isEmpty() && rankedReferences.isNotEmpty()
++
++    private fun sameEpisode(
++        selected: AutoSyncSubtitleCandidate,
++        candidate: AutoSyncSubtitleCandidate,
++        videoSourceUrl: String,
++    ): Boolean {
++        val context = selected.videoContextKey?.trim().orEmpty()
++        if (context.isEmpty() || candidate.videoContextKey != context) return false
++        val metadataMatches = when {
++            selected.seasonNumber != null || selected.episodeNumber != null ->
++                selected.seasonNumber != null &&
++                    selected.episodeNumber != null &&
++                    selected.seasonNumber == candidate.seasonNumber &&
++                    selected.episodeNumber == candidate.episodeNumber
++            else -> candidate.seasonNumber == null && candidate.episodeNumber == null
++        }
++        if (!metadataMatches) return false
++
++        val expected = EpisodeMarker(
++            season = selected.seasonNumber,
++            episode = selected.episodeNumber,
++        ).takeIf { it.season != null && it.episode != null }
++        val videoFileName = videoSourceUrl
++            .substringBefore('?')
++            .substringBefore('#')
++            .substringAfterLast('/')
++        return markersAreCompatible(
++            value = selected.sourceName ?: selected.name,
++            expected = expected,
++        ) && markersAreCompatible(
++            value = candidate.sourceName ?: candidate.name,
++            expected = expected,
++        ) && markersAreCompatible(
++            value = videoFileName,
++            expected = expected,
++        )
++    }
++
++    private fun trustedReleaseMatch(
++        reference: ReleaseFacts,
++        video: ReleaseFacts,
++    ): ReleaseMatch? {
++        if (contradicts(reference.sourceMarkers, video.sourceMarkers)) return null
++        if (contradicts(reference.cutMarkers, video.cutMarkers)) return null
++        if (contradicts(reference.groupNames, video.groupNames)) return null
++        if (contradicts(reference.providerMarkers, video.providerMarkers)) return null
++
++        if (
++            reference.coreTokens.isNotEmpty() &&
++            reference.coreTokens == video.coreTokens &&
++            reference.groupNames == video.groupNames &&
++            reference.sourceMarkers == video.sourceMarkers &&
++            reference.cutMarkers == video.cutMarkers &&
++            reference.providerMarkers == video.providerMarkers
++        ) {
++            return ReleaseMatch(exact = true, evidence = linkedSetOf("exact-release"))
++        }
++
++        val commonGroups = reference.groupNames intersect video.groupNames
++        val commonSources = reference.sourceMarkers intersect video.sourceMarkers
++        val knownReleaseTuple =
++            commonGroups.isNotEmpty() &&
++                commonSources.isNotEmpty() &&
++                reference.cutMarkers == video.cutMarkers &&
++                reference.providerMarkers == video.providerMarkers
++        if (!knownReleaseTuple) return null
++
++        return ReleaseMatch(
++            exact = false,
++            evidence = buildSet {
++                add("release-group")
++                commonSources.forEach { add("source-$it") }
++                reference.cutMarkers.forEach { add("cut-$it") }
++                reference.providerMarkers.forEach { add("provider-$it") }
++            },
++        )
++    }
++
++    private fun releaseFacts(rawValue: String): ReleaseFacts {
++        val decoded = decodePercentEncodedText(rawValue)
++        var stem = decoded
++            .substringBefore('?')
++            .substringBefore('#')
++            .substringAfterLast('/')
++            .lowercase()
++        val extension = stem.substringAfterLast('.', missingDelimiterValue = "")
++        if (extension in MEDIA_EXTENSIONS) {
++            stem = stem.substringBeforeLast('.')
++        }
++        while (true) {
++            val trimmed = stem.replace(SUBTITLE_SUFFIX, "")
++            if (trimmed == stem) break
++            stem = trimmed
++        }
++
++        val groups = HashSet<String>()
++        HYPHEN_GROUP.find(stem)?.groupValues?.getOrNull(1)
++            ?.takeIf { value -> value.any(Char::isLetter) }
++            ?.takeUnless { it in RESERVED_GROUP_SUFFIXES }
++            ?.let(groups::add)
++        BRACKET_GROUP.find(stem)?.groupValues?.getOrNull(1)
++            ?.let(groups::add)
++        val coreStem = stem
++            .replace(HYPHEN_GROUP, "")
++            .replace(BRACKET_GROUP, "")
++        val normalized = coreStem
++            .replace('_', ' ')
++            .replace('.', ' ')
++            .replace('-', ' ')
++            .replace('\'', ' ')
++        return ReleaseFacts(
++            coreTokens = coreStem
++                .split(Regex("""[^a-z0-9]+"""))
++                .filter { it.isNotBlank() && it !in CORE_STOP_TOKENS },
++            groupNames = groups,
++            sourceMarkers = markerSet(normalized, SOURCE_MARKERS),
++            cutMarkers = markerSet(normalized, CUT_MARKERS),
++            providerMarkers = markerSet(normalized, PROVIDER_MARKERS),
++        )
++    }
++
++    private fun markerSet(value: String, markers: List<EvidenceMarker>): Set<String> =
++        markers
++            .filter { marker -> marker.pattern.containsMatchIn(value) }
++            .mapTo(linkedSetOf()) { it.key }
++
++    private fun contradicts(first: Set<String>, second: Set<String>): Boolean =
++        first.isNotEmpty() && second.isNotEmpty() && (first intersect second).isEmpty()
++
++    private fun decodePercentEncodedText(value: String): String {
++        val source = value.take(MAX_DECODE_LENGTH)
++        val bytes = ArrayList<Byte>(source.length)
++        var index = 0
++        while (index < source.length) {
++            if (
++                source[index] == '%' &&
++                index + 2 < source.length
++            ) {
++                val high = source[index + 1].hexDigitOrNull()
++                val low = source[index + 2].hexDigitOrNull()
++                if (high != null && low != null) {
++                    bytes += ((high shl 4) + low).toByte()
++                    index += 3
++                    continue
++                }
++            }
++            source[index].toString().encodeToByteArray().forEach(bytes::add)
++            index++
++        }
++        return bytes.toByteArray().decodeToString()
++    }
++
++    private fun Char.hexDigitOrNull(): Int? = when (this) {
++        in '0'..'9' -> this - '0'
++        in 'a'..'f' -> this - 'a' + 10
++        in 'A'..'F' -> this - 'A' + 10
++        else -> null
++    }
++
++    private data class EvidenceMarker(val key: String, val pattern: Regex)
++    private data class ReleaseMatch(val exact: Boolean, val evidence: Set<String>)
++    private data class ReleaseFacts(
++        val coreTokens: List<String>,
++        val groupNames: Set<String>,
++        val sourceMarkers: Set<String>,
++        val cutMarkers: Set<String>,
++        val providerMarkers: Set<String>,
++    )
++    private data class EpisodeMarker(val season: Int?, val episode: Int?)
++
++    private fun markersAreCompatible(value: String?, expected: EpisodeMarker?): Boolean {
++        if (value.isNullOrBlank()) return true
++        val decoded = decodePercentEncodedText(value)
++        val markers = EPISODE_MARKERS
++            .flatMap { pattern -> pattern.findAll(decoded).map { it.groupValues }.toList() }
++            .map { groups ->
++                EpisodeMarker(
++                    season = groups.getOrNull(1)?.toIntOrNull(),
++                    episode = groups.getOrNull(2)?.toIntOrNull(),
++                )
++            }
++        if (markers.isEmpty()) return true
++        return expected != null && markers.all { it == expected }
++    }
++
++    private val EPISODE_MARKERS = listOf(
++        Regex("""(?i)\bs(\d{1,3})e(\d{1,4})\b"""),
++        Regex("""(?i)\b(\d{1,3})x(\d{1,4})\b"""),
++    )
++
++    private val HYPHEN_GROUP = Regex("""-([a-z0-9]{2,24})$""")
++    private val BRACKET_GROUP = Regex("""\[([a-z0-9]{2,24})]$""")
++    private val MEDIA_EXTENSIONS = setOf("mkv", "mp4", "m4v", "avi", "ts", "m2ts", "webm", "srt", "vtt", "ass", "ssa")
++    private val RESERVED_GROUP_SUFFIXES = setOf("dl", "rip")
++    private val CORE_STOP_TOKENS = setOf(
++        "forced",
++        "sdh",
++        "sub",
++        "subs",
++        "subtitle",
++        "subtitles",
++        "ar",
++        "ara",
++        "arabic",
++        "en",
++        "eng",
++        "english",
++        "fr",
++        "fre",
++        "french",
++        "es",
++        "spa",
++        "spanish",
++        "de",
++        "ger",
++        "german",
++        "it",
++        "ita",
++        "italian",
++        "ja",
++        "jpn",
++        "japanese",
++        "ko",
++        "kor",
++        "korean",
++        "zh",
++        "chi",
++        "chinese",
++        "pt",
++        "por",
++        "portuguese",
++        "ru",
++        "rus",
++        "russian",
++    )
++    private val SUBTITLE_SUFFIX = Regex(
++        """[._ ](?:forced|sdh|subs?|subtitles?|ar|ara|arabic|en|eng|english|fr|fre|french|es|spa|spanish|de|ger|german|it|ita|italian|ja|jpn|japanese|ko|kor|korean|zh|chi|chinese|pt|por|portuguese|ru|rus|russian)$""",
++        RegexOption.IGNORE_CASE,
++    )
++
++    private val SOURCE_MARKERS = listOf(
++        EvidenceMarker("web-dl", Regex("""\bweb\s*dl\b""")),
++        EvidenceMarker("webrip", Regex("""\bweb\s*rip\b""")),
++        EvidenceMarker("bluray", Regex("""\bblu\s*ray\b|\bbdrip\b|\bbrip\b""")),
++        EvidenceMarker("hdtv", Regex("""\bhdtv\b""")),
++        EvidenceMarker("dvdrip", Regex("""\bdvd\s*rip\b""")),
++    )
++    private val CUT_MARKERS = listOf(
++        EvidenceMarker("extended", Regex("""\bextended\b""")),
++        EvidenceMarker("uncut", Regex("""\buncut\b""")),
++        EvidenceMarker("theatrical", Regex("""\btheatrical\b""")),
++        EvidenceMarker("directors-cut", Regex("""\bdirector s? cut\b""")),
++        EvidenceMarker("fanedit", Regex("""\bfan\s*edit\b""")),
++    )
++    private val PROVIDER_MARKERS = listOf(
++        EvidenceMarker("amzn", Regex("""\bamzn\b""")),
++        EvidenceMarker("nf", Regex("""\bnf\b""")),
++        EvidenceMarker("dsnp", Regex("""\bdsnp\b""")),
++        EvidenceMarker("hmax", Regex("""\bhmax\b""")),
++        EvidenceMarker("atvp", Regex("""\batvp\b""")),
++        EvidenceMarker("pcok", Regex("""\bpcok\b""")),
++        EvidenceMarker("itunes", Regex("""\bitunes\b""")),
++    )
++    private const val MAX_DECODE_LENGTH = 1_024
++}
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicy.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicy.kt
 new file mode 100644
-index 0000000..c141a35
+index 0000000..db9db3d
 --- /dev/null
 +++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicy.kt
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,18 @@
 +package com.nuvio.app.features.autosync
 +
 +/** The live preference and playback target must still be valid when an analysis finishes. */
@@ -118,12 +474,28 @@ index 0000000..c141a35
 +    currentToken: Long,
 +    sourceUnchanged: Boolean,
 +): Boolean = enabled && capturedToken == currentToken && sourceUnchanged
++
++internal fun shouldShowManualFallbackNotice(
++    capturedToken: Long,
++    currentToken: Long,
++    lastNotifiedSourceUrl: String?,
++    currentSourceUrl: String,
++): Boolean =
++    capturedToken == currentToken &&
++        (lastNotifiedSourceUrl == null || lastNotifiedSourceUrl != currentSourceUrl)
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPlayerContracts.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPlayerContracts.kt
-index 3b7b670..0157dac 100644
+index 3b7b670..2b3abe9 100644
 --- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPlayerContracts.kt
 +++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPlayerContracts.kt
-@@ -6,10 +6,7 @@ internal data class AutoSyncSubtitleCandidate(
+@@ -4,12 +4,14 @@ internal data class AutoSyncSubtitleCandidate(
+     val url: String,
+     val language: String,
      val name: String? = null,
++    val addonName: String? = null,
++    val sourceName: String? = null,
++    val videoContextKey: String? = null,
++    val seasonNumber: Int? = null,
++    val episodeNumber: Int? = null,
  )
  
 -/**
@@ -135,7 +507,7 @@ index 3b7b670..0157dac 100644
      fun cancelForManualSubtitleDelay()
      fun setAutoSyncSubtitleCandidates(candidates: List<AutoSyncSubtitleCandidate>)
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt
-index 5ece5c8..c3eb876 100644
+index 5ece5c8..a3ec372 100644
 --- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt
 +++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncPreferencesRepository.kt
 @@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
@@ -156,6 +528,26 @@ index 5ece5c8..c3eb876 100644
          _aggressiveMode.value = loadAggressiveModePersistedValue?.invoke() ?: true
          _syncToleranceMs.value = loadSyncTolerancePersistedValue?.invoke()
              ?.takeIf { it in syncToleranceOptionsMs } ?: 0
+@@ -88,8 +88,17 @@ internal object AutoSyncPreferencesRepository {
+ 
+     fun claimStartupRun(sessionKey: Int, playbackKey: String): Boolean {
+         ensureLoaded()
+-        if (!_preferredSubtitleAutoSyncOnStart.value) return false
+-        if (lastStartupSessionKey == sessionKey && lastStartupPlaybackKey == playbackKey) return false
++        if (
++            !shouldClaimAutoSyncStartupRun(
++                enabled = _preferredSubtitleAutoSyncOnStart.value,
++                lastSessionKey = lastStartupSessionKey,
++                lastPlaybackKey = lastStartupPlaybackKey,
++                sessionKey = sessionKey,
++                playbackKey = playbackKey,
++            )
++        ) {
++            return false
++        }
+ 
+         lastStartupSessionKey = sessionKey
+         lastStartupPlaybackKey = playbackKey
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcher.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncReferenceMatcher.kt
 new file mode 100644
 index 0000000..5b46ed3
@@ -280,7 +672,7 @@ index 0000000..5b46ed3
 +    private const val MIN_REFERENCE_SPAN_MS = 30_000L
 +}
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt
-index cd5d972..e4ab8c3 100644
+index cd5d972..19c294f 100644
 --- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt
 +++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncRunPolicy.kt
 @@ -8,6 +8,11 @@ internal enum class AutoSyncCandidateScope {
@@ -295,6 +687,23 @@ index cd5d972..e4ab8c3 100644
  internal enum class AutoSyncStartAction {
      RUN,
      ATTACH_ORIGINAL,
+@@ -21,6 +26,16 @@ internal fun AutoSyncCandidateScope.alternativeCandidates(
+ internal val AutoSyncCandidateScope.usesAlternativeProvider: Boolean
+     get() = this == AutoSyncCandidateScope.STARTUP_SEARCH
+ 
++internal fun shouldClaimAutoSyncStartupRun(
++    enabled: Boolean,
++    lastSessionKey: Int?,
++    lastPlaybackKey: String?,
++    sessionKey: Int,
++    playbackKey: String,
++): Boolean =
++    enabled && playbackKey.isNotBlank() &&
++        (lastSessionKey != sessionKey || lastPlaybackKey != playbackKey)
++
+ internal fun shouldRestoreOriginalSubtitle(
+     activeSidecarSubtitleKey: String?,
+ ): Boolean = activeSidecarSubtitleKey == null
 diff --git a/composeApp/src/androidMain/kotlin/com/nuvio/app/features/autosync/AutoSyncSampledReferenceAligner.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/autosync/AutoSyncSampledReferenceAligner.kt
 similarity index 100%
 rename from composeApp/src/androidMain/kotlin/com/nuvio/app/features/autosync/AutoSyncSampledReferenceAligner.kt
@@ -590,6 +999,159 @@ index 0000000..76d101d
 +        const val BOUNDARY_TOLERANCE_MS = 500L
 +    }
 +}
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/AddonSubtitleLoader.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/AddonSubtitleLoader.kt
+index fd3c535..ad5549f 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/AddonSubtitleLoader.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/AddonSubtitleLoader.kt
+@@ -29,9 +29,17 @@ data class SubtitleAddonRequest(
+     val url: String,
+     val addonId: String,
+     val addonName: String,
++    val videoId: String = "",
++    val seasonNumber: Int? = null,
++    val episodeNumber: Int? = null,
+ )
+ 
+-internal fun addonSubtitleRequests(type: String, videoId: String): List<SubtitleAddonRequest> {
++internal fun addonSubtitleRequests(
++    type: String,
++    videoId: String,
++    seasonNumber: Int? = null,
++    episodeNumber: Int? = null,
++): List<SubtitleAddonRequest> {
+     if (ServerItemRef.isServerId(videoId)) return emptyList()
+     val requestType = canonicalSubtitleType(type)
+     return AddonRepository.uiState.value.addons.enabledAddons().mapNotNull { addon ->
+@@ -44,6 +52,9 @@ internal fun addonSubtitleRequests(type: String, videoId: String): List<Subtitle
+             url = buildAddonResourceUrl(manifest.transportUrl, "subtitles", requestType, videoId),
+             addonId = manifest.id,
+             addonName = addon.displayTitle,
++            videoId = videoId,
++            seasonNumber = seasonNumber,
++            episodeNumber = episodeNumber,
+         )
+     }
+ }
+@@ -76,6 +87,9 @@ private suspend fun parseAddonSubtitles(response: String, request: SubtitleAddon
+         val url = obj.stringValue("url") ?: return@mapIndexedNotNull null
+         val language = listOf("lang", "language", "languageCode", "locale", "label")
+             .firstNotNullOfOrNull(obj::stringValue) ?: "unknown"
++        val sourceName = obj.stringValue("name")
++            ?: obj.stringValue("filename")
++            ?: url.substringBefore('?').substringAfterLast('/').takeIf { it.isNotBlank() }
+         AddonSubtitle(
+             id = obj.stringValue("id") ?: "${request.addonId}_$index",
+             url = url,
+@@ -86,6 +100,10 @@ private suspend fun parseAddonSubtitles(response: String, request: SubtitleAddon
+                 request.addonName,
+             ),
+             addonName = request.addonName,
++            sourceName = sourceName,
++            videoContextKey = request.videoId,
++            seasonNumber = request.seasonNumber,
++            episodeNumber = request.episodeNumber,
+         )
+     }
+ }
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerRuntimeAutoSync.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerRuntimeAutoSync.kt
+index a1f0b27..cb249cb 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerRuntimeAutoSync.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerRuntimeAutoSync.kt
+@@ -8,17 +8,48 @@ import com.nuvio.app.features.autosync.AutoSyncPreferencesRepository
+ import com.nuvio.app.features.autosync.AutoSyncSubtitleCandidate
+ import kotlinx.coroutines.flow.collect
+ 
+-private fun List<AddonSubtitle>.toAutoSyncCandidates(): List<AutoSyncSubtitleCandidate> =
+-    map { subtitle ->
++private fun PlayerScreenRuntime.toAutoSyncCandidates(
++    subtitles: List<AddonSubtitle>,
++): List<AutoSyncSubtitleCandidate> {
++    val currentExternalUrls = externalSubtitles.mapTo(hashSetOf()) { it.url }
++    return subtitles.mapNotNull { subtitle ->
++        val isCurrentStreamSubtitle = subtitle.videoContextKey == null &&
++            subtitle.url in currentExternalUrls
++        if (subtitle.videoContextKey == null && !isCurrentStreamSubtitle) {
++            return@mapNotNull null
++        }
++        if (subtitle.videoContextKey != null && subtitle.videoContextKey != activeVideoId) {
++            return@mapNotNull null
++        }
++        if (subtitle.videoContextKey != null &&
++            (subtitle.seasonNumber != activeSeasonNumber ||
++                subtitle.episodeNumber != activeEpisodeNumber)
++        ) {
++            return@mapNotNull null
++        }
+         AutoSyncSubtitleCandidate(
+             url = subtitle.url,
+             language = subtitle.language,
+-            name = subtitle.display,
++            name = subtitle.sourceName ?: subtitle.display,
++            addonName = subtitle.addonName,
++            sourceName = subtitle.sourceName,
++            videoContextKey = subtitle.videoContextKey ?: activeVideoId,
++            seasonNumber = if (isCurrentStreamSubtitle) {
++                activeSeasonNumber
++            } else {
++                subtitle.seasonNumber
++            },
++            episodeNumber = if (isCurrentStreamSubtitle) {
++                activeEpisodeNumber
++            } else {
++                subtitle.episodeNumber
++            },
+         )
+     }
++}
+ 
+ private fun PlayerScreenRuntime.currentAutoSyncCandidates(): List<AutoSyncSubtitleCandidate> =
+-    addonSubtitles.toAutoSyncCandidates()
++    toAutoSyncCandidates(addonSubtitles)
+ 
+ internal fun PlayerScreenRuntime.configureAutoSyncController(
+     controller: PlayerEngineController,
+@@ -49,7 +80,12 @@ internal fun PlayerScreenRuntime.configureAutoSyncController(
+ @Composable
+ internal fun PlayerScreenRuntime.BindAutoSyncRuntimeEffects() {
+     val activeController = playerController
+-    DisposableEffect(activeController) {
++    DisposableEffect(
++        activeController,
++        activeVideoId,
++        activeSeasonNumber,
++        activeEpisodeNumber,
++    ) {
+         // Runs once playerController is set, which Nuvio only does for the live playback key.
+         activeController?.let { configureAutoSyncController(it) }
+         onDispose { activeController?.setAutoSyncAppliedListener(null) }
+@@ -65,14 +101,22 @@ internal fun PlayerScreenRuntime.BindAutoSyncRuntimeEffects() {
+         preferredSubtitleSelectionApplied = false
+         refreshTracks()
+     }
+-    LaunchedEffect(playerController, externalSubtitles) {
++    LaunchedEffect(
++        playerController,
++        externalSubtitles,
++        activeVideoId,
++        activeSeasonNumber,
++        activeEpisodeNumber,
++    ) {
+         val controller = playerController ?: return@LaunchedEffect
+         SubtitleRepository.addonSubtitles.collect { repositorySubtitles ->
+             controller.setAutoSyncSubtitleCandidates(
+-                mergeStreamAndAddonSubtitles(
+-                    repositorySubtitles,
+-                    externalSubtitles,
+-                ).toAutoSyncCandidates(),
++                toAutoSyncCandidates(
++                    mergeStreamAndAddonSubtitles(
++                        repositorySubtitles,
++                        externalSubtitles,
++                    ),
++                ),
+             )
+         }
+     }
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenModalHosts.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenModalHosts.kt
 index 142fef5..321af58 100644
 --- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenModalHosts.kt
@@ -610,6 +1172,24 @@ index 142fef5..321af58 100644
          onStyleChanged = onSubtitleStyleChanged,
          onSubtitleDelayChanged = onSubtitleDelayChanged,
          onSubtitleDelayReset = onSubtitleDelayReset,
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeSubtitleActions.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeSubtitleActions.kt
+index ae0b738..dff0666 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeSubtitleActions.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeSubtitleActions.kt
+@@ -13,7 +13,12 @@ internal fun PlayerScreenRuntime.fetchAddonSubtitlesForActiveItem() {
+     }
+     val type = activeAddonSubtitleType.takeIf { it.isNotBlank() } ?: return
+     val videoId = activeVideoId?.takeIf { it.isNotBlank() } ?: return
+-    SubtitleRepository.fetchAddonSubtitles(type, videoId)
++    SubtitleRepository.fetchAddonSubtitles(
++        type = type,
++        videoId = videoId,
++        seasonNumber = activeSeasonNumber,
++        episodeNumber = activeEpisodeNumber,
++    )
+ }
+ 
+ internal fun PlayerScreenRuntime.setSubtitleDelay(delayMs: Int) {
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeUi.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeUi.kt
 index 59993bf..a222651 100644
 --- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeUi.kt
@@ -644,6 +1224,33 @@ index 59993bf..a222651 100644
          onSubtitleStyleChanged = PlayerSettingsRepository::setSubtitleStyle,
          onSubtitleDelayChanged = { delayMs -> setSubtitleDelay(delayMs) },
          onSubtitleDelayReset = { setSubtitleDelay(0) },
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerStartupSubtitles.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerStartupSubtitles.kt
+index 42986ee..d2a99b8 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerStartupSubtitles.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerStartupSubtitles.kt
+@@ -19,6 +19,7 @@ internal fun StreamSubtitle.toAddonSubtitle(): AddonSubtitle = AddonSubtitle(
+     language = language,
+     display = name?.takeIf { it.isNotBlank() } ?: language,
+     addonName = name,
++    sourceName = name,
+ )
+ 
+ internal fun mergeStreamAndAddonSubtitles(
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleAudioModels.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleAudioModels.kt
+index 8da074c..2f56671 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleAudioModels.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleAudioModels.kt
+@@ -31,6 +31,10 @@ data class AddonSubtitle(
+     val language: String,
+     val display: String,
+     val addonName: String? = null,
++    val sourceName: String? = null,
++    val videoContextKey: String? = null,
++    val seasonNumber: Int? = null,
++    val episodeNumber: Int? = null,
+     val isSelected: Boolean = false,
+ )
+ 
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleFilePicker.kt
 new file mode 100644
 index 0000000..12a3a50
@@ -692,6 +1299,133 @@ index 45f98b1..9842541 100644
                          when {
                              options.isEmpty() -> {
                                  when (
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleRepository.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleRepository.kt
+index 6b359c0..76f88e2 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleRepository.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/SubtitleRepository.kt
+@@ -29,16 +29,29 @@ object SubtitleRepository {
+     val error: StateFlow<String?> = _error.asStateFlow()
+ 
+     private var activeFetchJob: Job? = null
++    private var fetchGeneration = 0L
+ 
+-    fun fetchAddonSubtitles(type: String, videoId: String) {
++    fun fetchAddonSubtitles(
++        type: String,
++        videoId: String,
++        seasonNumber: Int? = null,
++        episodeNumber: Int? = null,
++    ) {
++        val generation = ++fetchGeneration
+         activeFetchJob?.cancel()
+         _loadingProgress.value = null
+         activeFetchJob = scope.launch {
++            if (generation != fetchGeneration) return@launch
+             _isLoading.value = true
+             _error.value = null
+             _addonSubtitles.value = emptyList()
+ 
+-            val requests = addonSubtitleRequests(type, videoId)
++            val requests = addonSubtitleRequests(
++                type = type,
++                videoId = videoId,
++                seasonNumber = seasonNumber,
++                episodeNumber = episodeNumber,
++            )
+             if (requests.isEmpty()) {
+                 _isLoading.value = false
+                 return@launch
+@@ -46,12 +59,15 @@ object SubtitleRepository {
+ 
+             _loadingProgress.value = SubtitleLoadingProgress(total = requests.size)
+             loadAddonSubtitles(requests) { request, subtitles ->
+-                _addonSubtitles.update { it + subtitles }
+-                _loadingProgress.update { progress ->
+-                    progress?.copy(completed = progress.completed + 1, addonName = request.addonName)
++                if (generation == fetchGeneration) {
++                    _addonSubtitles.update { it + subtitles }
++                    _loadingProgress.update { progress ->
++                        progress?.copy(completed = progress.completed + 1, addonName = request.addonName)
++                    }
+                 }
+             }
+ 
++            if (generation != fetchGeneration) return@launch
+             if (_addonSubtitles.value.isEmpty()) {
+                 _error.value = getString(Res.string.compose_player_no_subtitles_found)
+             }
+@@ -60,6 +76,7 @@ object SubtitleRepository {
+     }
+ 
+     fun clear() {
++        fetchGeneration++
+         activeFetchJob?.cancel()
+         _loadingProgress.value = null
+         _addonSubtitles.value = emptyList()
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/skip/SkipIntroRepository.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/skip/SkipIntroRepository.kt
+index 129142c..6a569cf 100644
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/skip/SkipIntroRepository.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/skip/SkipIntroRepository.kt
+@@ -89,9 +89,29 @@ object SkipIntroRepository {
+         }
+ 
+         val simklIds = simklIdsDeferred.await()
+-        val malId = simklIds?.mal
++        var malId = simklIds?.mal
+         val anilistId = simklIds?.anilist
+ 
++        if (malId.isNullOrBlank()) {
++            val armEntries = resolveImdbEntries(imdbId)
++            malId = chooseSeasonScopedMalId(
++                ids = armEntries.map { it.myanimelist?.toString() },
++                season = season,
++            )
++            InAppLogger.debug(
++                "Player/SkipIntro",
++                "ARM anime id fallback imdb=$imdbId s=$season " +
++                    "entries=${armEntries.size} malResolved=${malId != null}",
++            )
++        }
++        val resolvedMalId = malId?.takeIf { it.isNotBlank() }
++        if (resolvedMalId == null && anilistId == null) {
++            InAppLogger.debug(
++                "Player/SkipIntro",
++                "AniSkip unavailable imdb=$imdbId s=$season e=$episode reason=no_mapped_anime_id",
++            )
++        }
++
+         // Remap the TVDB episode number to the anime-entry-local episode number.
+         val animeEpisode = if (simklIds != null) {
+             val mapping = SimklIdResolver.getEpisodeMapping(simklIds.simklId, simklIds.type)
+@@ -101,7 +121,11 @@ object SkipIntroRepository {
+         } else episode
+ 
+         val aniSkipDeferred = async {
+-            if (malId != null) fetchFromAniSkip(malId, animeEpisode) else emptyList()
++            if (resolvedMalId != null) {
++                fetchFromAniSkip(resolvedMalId, animeEpisode)
++            } else {
++                emptyList()
++            }
+         }
+         val animeSkipDeferred = async {
+             if (anilistId != null) fetchFromAnimeSkip(anilistId, animeEpisode, season = null) else emptyList()
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/skip/SkipLookupPolicy.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/skip/SkipLookupPolicy.kt
+new file mode 100644
+index 0000000..f5222b2
+--- /dev/null
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/skip/SkipLookupPolicy.kt
+@@ -0,0 +1,10 @@
++package com.nuvio.app.features.player.skip
++
++/** ARM entries do not carry an authoritative season. Only a single parent mapping is unambiguous. */
++internal fun chooseSeasonScopedMalId(ids: List<String?>, season: Int): String? {
++    if (season != 1) return null
++    return ids
++        .mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }
++        .distinct()
++        .singleOrNull()
++}
 diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AutoSyncPlaybackSettings.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AutoSyncPlaybackSettings.kt
 index 228e2dd..d1de214 100644
 --- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AutoSyncPlaybackSettings.kt
@@ -739,12 +1473,259 @@ index 0f18d77..653a594 100644
                  SettingsGroupDivider(isTablet = isTablet)
                  SettingsSwitchRow(
                      title = stringResource(Res.string.settings_playback_subtitle_strip_sdh),
+diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncAddonReferencePolicyTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncAddonReferencePolicyTest.kt
+new file mode 100644
+index 0000000..6d82e74
+--- /dev/null
++++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncAddonReferencePolicyTest.kt
+@@ -0,0 +1,241 @@
++package com.nuvio.app.features.autosync
++
++import kotlin.test.Test
++import kotlin.test.assertEquals
++import kotlin.test.assertFalse
++import kotlin.test.assertTrue
++
++class AutoSyncAddonReferencePolicyTest {
++    @Test
++    fun permitsVerifiedTextReferenceOnlyWhenEmbeddedReferencesAreEmpty() {
++        val selected = candidate(
++            url = "https://subs.example/ar.srt",
++            language = "ar",
++            sourceName = "Arabic translation for episode 7.srt",
++            episode = 7,
++        )
++        val english = candidate(
++            url = "https://subs.example/en.srt",
++            language = "en",
++            sourceName = "Show.S01E07.1080p.WEB-DL-GROUP.English.srt",
++            episode = 7,
++        )
++
++        val ranked = AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++            selected = selected,
++            candidates = listOf(selected, english),
++            videoSourceUrl =
++                "https://video.example/Show%2ES01E07%2E1080p%2EWEB%2DDL%2DGROUP.mkv",
++        )
++
++        assertEquals(listOf(english.url), ranked.map { it.candidate.url })
++        assertTrue(
++            AutoSyncAddonReferencePolicy.shouldUseTextFallback(
++                embeddedReferences = emptyList(),
++                rankedReferences = ranked,
++            ),
++        )
++    }
++
++    @Test
++    fun rejectsWrongEpisodeWrongReleaseAndUnverifiableVideoVersion() {
++        val selected = candidate(
++            url = "https://subs.example/ar.srt",
++            language = "ar",
++            sourceName = "Show.S02E03.Arabic.WEB-DL.srt",
++            season = 2,
++            episode = 3,
++        )
++        val wrongEpisode = candidate(
++            url = "https://subs.example/wrong-episode.srt",
++            sourceName = "Show.S02E04.English.WEB-DL.srt",
++            season = 2,
++            episode = 4,
++        )
++        val wrongRelease = candidate(
++            url = "https://subs.example/wrong-release.srt",
++            sourceName = "Show.S02E03.English.WEBRip.srt",
++            season = 2,
++            episode = 3,
++        )
++
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(selected, wrongEpisode, wrongRelease),
++                videoSourceUrl = "https://video.example/Show.S02E03.WEB-DL.mkv",
++            ).isEmpty(),
++        )
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(
++                    selected,
++                    wrongEpisode.copy(
++                        url = "https://subs.example/same-episode.srt",
++                        sourceName = "Show.S02E03.English.WEB-DL.srt",
++                        episodeNumber = 3,
++                    ),
++                ),
++                videoSourceUrl = "https://video.example/stream/master.m3u8",
++            ).isEmpty(),
++        )
++    }
++
++    @Test
++    fun aTrustedTextReferenceStillCannotReplaceAnAvailableEmbeddedReference() {
++        val selected = candidate(
++            url = "https://subs.example/ar.srt",
++            language = "ar",
++            sourceName = "Movie.Arabic.WEB-DL.srt",
++            season = null,
++            episode = null,
++        )
++        val reference = candidate(
++            url = "https://subs.example/en.srt",
++            sourceName = "Movie.English.WEB-DL.srt",
++            season = null,
++            episode = null,
++        )
++        val ranked = AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++            selected = selected,
++            candidates = listOf(selected, reference),
++            videoSourceUrl = "https://video.example/Movie.WEB-DL.mkv",
++        )
++
++        assertFalse(
++            AutoSyncAddonReferencePolicy.shouldUseTextFallback(
++                embeddedReferences = listOf(
++                    AutoSyncReferenceTimeline(
++                        key = "embedded:1",
++                        language = "en",
++                        label = "Embedded",
++                        cues = emptyList(),
++                    ),
++                ),
++                rankedReferences = ranked,
++            ),
++        )
++    }
++
++    @Test
++    fun rejectsAReleaseFilenameThatConflictsWithTheRequestedEpisode() {
++        val selected = candidate(
++            url = "https://subs.example/ar.srt",
++            language = "ar",
++            sourceName = "Show.S01E07.Arabic.WEB-DL.srt",
++            episode = 7,
++        )
++        val conflictingFilename = candidate(
++            url = "https://subs.example/en.srt",
++            language = "en",
++            sourceName = "Show.S01E08.English.WEB-DL.srt",
++            episode = 7,
++        )
++
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(selected, conflictingFilename),
++                videoSourceUrl = "https://video.example/Show.S01E07.WEB-DL.mkv",
++            ).isEmpty(),
++        )
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(
++                    selected,
++                    conflictingFilename.copy(
++                        sourceName = "Show.S01E07.English.WEB-DL.srt",
++                    ),
++                ),
++                videoSourceUrl = "https://video.example/Show.S01E08.WEB-DL.mkv",
++            ).isEmpty(),
++        )
++    }
++
++    @Test
++    fun rejectsCutProviderAndNamedReleaseContradictions() {
++        val selected = candidate(
++            url = "https://subs.example/ar.srt",
++            language = "ar",
++            sourceName = "Localized subtitle",
++            season = null,
++            episode = null,
++        )
++        fun reference(name: String) = candidate(
++            url = "https://subs.example/$name.srt",
++            sourceName = name,
++            season = null,
++            episode = null,
++        )
++
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(
++                    selected,
++                    reference("Movie.1080p.BluRay-GROUP.Theatrical.English.srt"),
++                ),
++                videoSourceUrl = "https://video.example/Movie.1080p.BluRay-GROUP.Extended.mkv",
++            ).isEmpty(),
++        )
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(
++                    selected,
++                    reference("Movie.1080p.WEB-DL.NF-GROUP.English.srt"),
++                ),
++                videoSourceUrl = "https://video.example/Movie.1080p.WEB-DL.AMZN-GROUP.mkv",
++            ).isEmpty(),
++        )
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(
++                    selected,
++                    reference("Movie.1080p.WEB-DL-OTHER.English.srt"),
++                ),
++                videoSourceUrl = "https://video.example/Movie.1080p.WEB-DL-GROUP.mkv",
++            ).isEmpty(),
++        )
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(
++                    selected,
++                    reference("Movie.BluRay.English.srt"),
++                ),
++                videoSourceUrl = "https://video.example/Movie.1080p.BluRay.mkv",
++            ).isEmpty(),
++        )
++        assertTrue(
++            AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                selected = selected,
++                candidates = listOf(
++                    selected,
++                    reference("Movie.1080p.BluRay-GROUP.English.srt"),
++                ),
++                videoSourceUrl = "https://video.example/Movie.1080p.BluRay.mkv",
++            ).isEmpty(),
++        )
++    }
++
++    private fun candidate(
++        url: String,
++        language: String = "en",
++        sourceName: String,
++        season: Int? = 1,
++        episode: Int?,
++    ) = AutoSyncSubtitleCandidate(
++        url = url,
++        language = language,
++        name = sourceName,
++        addonName = "Subtitles",
++        sourceName = sourceName,
++        videoContextKey = "tt1234567",
++        seasonNumber = season,
++        episodeNumber = episode,
++    )
++}
 diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt
 new file mode 100644
-index 0000000..0f56e41
+index 0000000..1b0306f
 --- /dev/null
 +++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/autosync/AutoSyncApplyPolicyTest.kt
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,124 @@
 +package com.nuvio.app.features.autosync
 +
 +import kotlin.test.Test
@@ -764,6 +1745,37 @@ index 0000000..0f56e41
 +        assertFalse(supportsAutoSyncMediaSource(""))
 +        assertFalse(supportsAutoSyncMediaSource("content://provider/movie"))
 +        assertFalse(supportsAutoSyncMediaSource("custom://movie"))
++    }
++
++    @Test
++    fun startupAutoSyncRunsOncePerEpisodeAndAgainForTheNextEpisode() {
++        assertTrue(
++            shouldClaimAutoSyncStartupRun(
++                enabled = true,
++                lastSessionKey = 10,
++                lastPlaybackKey = "episode:1",
++                sessionKey = 10,
++                playbackKey = "episode:2",
++            ),
++        )
++        assertFalse(
++            shouldClaimAutoSyncStartupRun(
++                enabled = true,
++                lastSessionKey = 10,
++                lastPlaybackKey = "episode:2",
++                sessionKey = 10,
++                playbackKey = "episode:2",
++            ),
++        )
++        assertFalse(
++            shouldClaimAutoSyncStartupRun(
++                enabled = false,
++                lastSessionKey = 10,
++                lastPlaybackKey = "episode:1",
++                sessionKey = 10,
++                playbackKey = "episode:2",
++            ),
++        )
 +    }
 +
 +    @Test
@@ -806,6 +1818,34 @@ index 0000000..0f56e41
 +                capturedToken = 7L,
 +                currentToken = 7L,
 +                sourceUnchanged = false,
++            ),
++        )
++    }
++
++    @Test
++    fun manualFallbackNoticeIsShownOnceForTheCurrentOperationAndSource() {
++        assertTrue(
++            shouldShowManualFallbackNotice(
++                capturedToken = 7,
++                currentToken = 7,
++                lastNotifiedSourceUrl = "episode:1",
++                currentSourceUrl = "episode:2",
++            ),
++        )
++        assertFalse(
++            shouldShowManualFallbackNotice(
++                capturedToken = 7,
++                currentToken = 7,
++                lastNotifiedSourceUrl = "episode:2",
++                currentSourceUrl = "episode:2",
++            ),
++        )
++        assertFalse(
++            shouldShowManualFallbackNotice(
++                capturedToken = 7,
++                currentToken = 8,
++                lastNotifiedSourceUrl = null,
++                currentSourceUrl = "episode:2",
 +            ),
 +        )
 +    }
@@ -1164,6 +2204,38 @@ index 0000000..135ec7b
 +        alignmentInterceptMs = interceptMs,
 +    )
 +}
+diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/player/skip/SkipLookupPolicyTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/player/skip/SkipLookupPolicyTest.kt
+new file mode 100644
+index 0000000..3a768ea
+--- /dev/null
++++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/player/skip/SkipLookupPolicyTest.kt
+@@ -0,0 +1,26 @@
++package com.nuvio.app.features.player.skip
++
++import kotlin.test.Test
++import kotlin.test.assertEquals
++import kotlin.test.assertNull
++
++class SkipLookupPolicyTest {
++    @Test
++    fun usesAnUnambiguousParentMappingOnly() {
++        assertEquals(
++            "123",
++            chooseSeasonScopedMalId(
++                ids = listOf(null, "123", "123"),
++                season = 1,
++            ),
++        )
++    }
++
++    @Test
++    fun rejectsMissingAmbiguousOrSeasonUnverifiedAnimeMappings() {
++        assertNull(chooseSeasonScopedMalId(emptyList(), season = 1))
++        assertNull(chooseSeasonScopedMalId(listOf("123", "321"), season = 1))
++        assertNull(chooseSeasonScopedMalId(listOf("123"), season = 2))
++        assertNull(chooseSeasonScopedMalId(listOf("123"), season = 0))
++    }
++}
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/MainViewController.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/MainViewController.kt
 index 48b4e77..c12abe2 100644
 --- a/composeApp/src/iosMain/kotlin/com/nuvio/app/MainViewController.kt
@@ -1258,10 +2330,10 @@ index 0000000..57f361d
 +}
 diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
 new file mode 100644
-index 0000000..152263f
+index 0000000..9b34acb
 --- /dev/null
 +++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/autosync/IosAutoSyncPlayerController.kt
-@@ -0,0 +1,551 @@
+@@ -0,0 +1,660 @@
 +package com.nuvio.app.features.autosync
 +
 +import com.nuvio.app.core.ui.NuvioToastController
@@ -1295,9 +2367,7 @@ index 0000000..152263f
 +import kotlinx.serialization.encodeToString
 +import kotlinx.serialization.json.Json
 +import nuvio.composeapp.generated.resources.Res
-+import nuvio.composeapp.generated.resources.autosync_toast_failed
-+import nuvio.composeapp.generated.resources.autosync_toast_failed_no_reference
-+import nuvio.composeapp.generated.resources.autosync_toast_failed_unsupported
++import nuvio.composeapp.generated.resources.autosync_toast_manual_fallback
 +import org.jetbrains.compose.resources.getString
 +import platform.Foundation.NSFileManager
 +import platform.Foundation.NSString
@@ -1331,6 +2401,7 @@ index 0000000..152263f
 +    private var operationToken = 0L
 +    private var candidates: List<AutoSyncSubtitleCandidate> = emptyList()
 +    private var appliedListener: ((subtitleUrl: String, delayMs: Int) -> Unit)? = null
++    private var manualFallbackNoticeSourceUrl: String? = null
 +
 +    init {
 +        scope.launch {
@@ -1448,13 +2519,19 @@ index 0000000..152263f
 +                        AutoSyncSubtitleCueParser.parse(body, url)
 +                    }
 +                }.orEmpty()
-+                val references = referencesJob.await()
++                val referenceLoad = referencesJob.await()
++                val references = referenceLoad.references
 +                InAppLogger.info(
 +                    "AutoSync/iOS",
 +                    "references=${references.size} " +
 +                        references.joinToString(separator = ", ") { reference ->
 +                            "${reference.key}:${reference.cues.size}${if (reference.sampled) "s" else ""}"
-+                        },
++                        } +
++                        " reason=${referenceLoad.reason}" +
++                        " subtitleStreams=${referenceLoad.subtitleStreams}" +
++                        " candidateStreams=${referenceLoad.candidateStreams}" +
++                        " packets=${referenceLoad.packetsRead}" +
++                        " eof=${referenceLoad.reachedEof}",
 +                )
 +                if (selectedBody == null) {
 +                    InAppLogger.warn("AutoSync/iOS", "selected subtitle body did not load")
@@ -1473,6 +2550,7 @@ index 0000000..152263f
 +                    return@launch
 +                }
 +
++                val selectedCandidate = candidates.firstOrNull { it.url == url }
 +                var best = if (selectedCues.isNotEmpty()) {
 +                    withContext(Dispatchers.Default) {
 +                        AutoSyncReferenceMatcher.findBest(selectedCues, references)
@@ -1481,13 +2559,44 @@ index 0000000..152263f
 +                    null
 +                }
 +                var bestCandidate = selectedCues.takeIf { it.isNotEmpty() }?.let { cues ->
-+                    CandidateTimeline(url, selectedLanguage, selectedBody.orEmpty(), cues)
++                    CandidateTimeline(
++                        candidate = selectedCandidate ?: AutoSyncSubtitleCandidate(
++                            url = url,
++                            language = selectedLanguage.orEmpty(),
++                        ),
++                        body = selectedBody.orEmpty(),
++                        cues = cues,
++                    )
 +                }
 +
-+                if (candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH) {
++                var addonReferenceCount = 0
++                if (references.isEmpty() && selectedCandidate != null && selectedCues.isNotEmpty()) {
++                    val rankedReferences = AutoSyncAddonReferencePolicy.rankTrustedCandidates(
++                        selected = selectedCandidate,
++                        candidates = candidates,
++                        videoSourceUrl = currentSourceUrl,
++                    )
++                    if (
++                        AutoSyncAddonReferencePolicy.shouldUseTextFallback(
++                            embeddedReferences = references,
++                            rankedReferences = rankedReferences,
++                        )
++                    ) {
++                        addonReferenceCount = rankedReferences.size
++                        best = findAddonReferenceMatch(
++                            target = selectedCues,
++                            rankedReferences = rankedReferences,
++                        )
++                    }
++                }
++
++                if (
++                    references.isNotEmpty() &&
++                    candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH
++                ) {
 +                    val aggressive = AutoSyncPreferencesRepository.aggressiveMode.value
 +                    if (best == null || aggressive || !isStrongMatch(best)) {
-+                        val alternatives = alternativesFor(url, selectedLanguage)
++                        val alternatives = sameLanguageAlternativesFor(url, selectedLanguage)
 +                        val loadedAlternatives = coroutineScope {
 +                            alternatives.map { candidate ->
 +                                async {
@@ -1521,7 +2630,8 @@ index 0000000..152263f
 +                    "selectedCues=${selectedCues.size} language=${selectedLanguage ?: "none"} " +
 +                        "best=${best?.score ?: -1.0} " +
 +                        "alignment=${best?.timeline?.alignmentSource ?: "none"} " +
-+                        "offsetMs=${best?.timeline?.alignmentInterceptMs ?: 0.0}",
++                        "offsetMs=${best?.timeline?.alignmentInterceptMs ?: 0.0} " +
++                        "addonReferences=$addonReferenceCount",
 +                )
 +                if (
 +                    !canApplyAutoSyncResult(
@@ -1540,19 +2650,12 @@ index 0000000..152263f
 +                        "AutoSync/iOS",
 +                        "no confident match references=${references.size} selectedCues=${selectedCues.size}",
 +                    )
-+                    showFailure(
-+                        token,
-+                        if (references.isEmpty()) {
-+                            Res.string.autosync_toast_failed_no_reference
-+                        } else {
-+                            Res.string.autosync_toast_failed
-+                        },
-+                    )
++                    showManualFallback(token, currentSourceUrl)
 +                    return@launch
 +                }
 +
 +                val tolerance = AutoSyncPreferencesRepository.syncToleranceMs.value
-+                val keepOriginalTiming = candidate.url == url &&
++                val keepOriginalTiming = candidate.candidate.url == url &&
 +                    tolerance > 0 &&
 +                    match.timeline.maxAlignmentShiftMs() <= tolerance
 +                if (keepOriginalTiming) {
@@ -1585,7 +2688,7 @@ index 0000000..152263f
 +                        return@launch
 +                    }
 +                    if (retimed == null) {
-+                        showFailure(token, Res.string.autosync_toast_failed_unsupported)
++                        showManualFallback(token, currentSourceUrl)
 +                        return@launch
 +                    }
 +                    val subtitlePath = writeRetimedSubtitle(retimed)
@@ -1602,7 +2705,7 @@ index 0000000..152263f
 +                        return@launch
 +                    }
 +                    if (subtitlePath == null) {
-+                        showFailure(token, Res.string.autosync_toast_failed)
++                        showManualFallback(token, currentSourceUrl)
 +                        return@launch
 +                    }
 +                    delegate.setSubtitleUri(
@@ -1622,14 +2725,14 @@ index 0000000..152263f
 +                    return@launch
 +                }
 +                delegate.setSubtitleDelayMs(0)
-+                AutoSyncSyncedSubtitle.mark(candidate.url)
-+                appliedListener?.invoke(candidate.url, 0)
++                AutoSyncSyncedSubtitle.mark(candidate.candidate.url)
++                appliedListener?.invoke(candidate.candidate.url, 0)
 +            } catch (cancel: CancellationException) {
 +                throw cancel
 +            } catch (_: Exception) {
 +                if (token != operationToken) return@launch
 +                if (!AutoSyncPreferencesRepository.preferredSubtitleAutoSyncOnStart.value) return@launch
-+                showFailure(token, Res.string.autosync_toast_failed)
++                showManualFallback(token, currentSourceUrl)
 +            }
 +        }
 +    }
@@ -1640,7 +2743,7 @@ index 0000000..152263f
 +            ?.takeIf { it.isNotBlank() }
 +            ?: getPreferredLanguage()?.takeIf { it.isNotBlank() }
 +
-+    private fun alternativesFor(
++    private fun sameLanguageAlternativesFor(
 +        selectedUrl: String,
 +        selectedLanguage: String?,
 +    ): List<AutoSyncSubtitleCandidate> =
@@ -1663,7 +2766,46 @@ index 0000000..152263f
 +        val cues = withContext(Dispatchers.Default) {
 +            AutoSyncSubtitleCueParser.parse(body, candidate.url)
 +        }
-+        return CandidateTimeline(candidate.url, candidate.language, body, cues)
++        return CandidateTimeline(candidate, body, cues)
++    }
++
++    private suspend fun findAddonReferenceMatch(
++        target: List<SubtitleSyncCue>,
++        rankedReferences: List<AutoSyncAddonReferencePolicy.RankedReference>,
++    ): AutoSyncReferenceMatch? {
++        val loaded = coroutineScope {
++            rankedReferences.take(MAX_ADDON_REFERENCES).map { ranked ->
++                async {
++                    loadCandidate(ranked.candidate)?.let { timeline -> ranked to timeline }
++                }
++            }.awaitAll().filterNotNull()
++        }
++        for ((ranked, timeline) in loaded) {
++            if (timeline.cues.isEmpty()) continue
++            val match = withContext(Dispatchers.Default) {
++                AutoSyncReferenceMatcher.findBest(
++                    target = target,
++                    references = listOf(
++                        AutoSyncReferenceTimeline(
++                            key = "addon:${ranked.candidate.addonName.orEmpty()}:" +
++                                ranked.candidate.language,
++                            language = ranked.candidate.language,
++                            label = ranked.candidate.sourceName,
++                            cues = timeline.cues,
++                            sampled = false,
++                        ),
++                    ),
++                )
++            } ?: continue
++            InAppLogger.info(
++                "AutoSync/iOS",
++                "trusted addon text reference language=${ranked.candidate.language} " +
++                    "sameAddon=${ranked.sameAddon} " +
++                    "evidence=${ranked.versionEvidence.joinToString("+")}",
++            )
++            return match
++        }
++        return null
 +    }
 +
 +    @OptIn(ExperimentalForeignApi::class)
@@ -1692,7 +2834,7 @@ index 0000000..152263f
 +    private suspend fun loadEmbeddedReferences(
 +        currentSourceUrl: String,
 +        headers: Map<String, String>,
-+    ): List<AutoSyncReferenceTimeline> {
++    ): EmbeddedReferenceLoad {
 +        val payload = suspendCancellableCoroutine { continuation ->
 +            bridge.loadEmbeddedSubtitleReferences(
 +                sourceUrl = currentSourceUrl,
@@ -1709,25 +2851,40 @@ index 0000000..152263f
 +        return payload
 +    }
 +
-+    private fun decodeReferencePayload(json: String): List<AutoSyncReferenceTimeline> {
-+        if (json.isBlank()) return emptyList()
++    private fun decodeReferencePayload(json: String): EmbeddedReferenceLoad {
++        if (json.isBlank()) return EmbeddedReferenceLoad(reason = "empty_payload")
 +        return runCatching {
 +            referenceJson.decodeFromString<EmbeddedReferencePayload>(json)
-+        }.getOrNull()?.tracks.orEmpty().map { track ->
-+            AutoSyncReferenceTimeline(
-+                key = track.key,
-+                language = track.language,
-+                label = track.label,
-+                cues = track.cues.map { cue ->
-+                    SubtitleSyncCue(
-+                        startTimeMs = cue.startMs,
-+                        endTimeMs = cue.endMs.coerceAtLeast(cue.startMs + 1L),
-+                        text = cue.text.orEmpty(),
-+                    )
-+                }.sortedBy { it.startTimeMs },
-+                sampled = track.sampled,
++        }.getOrNull()?.let { payload ->
++            val references = payload.tracks.map { track ->
++                AutoSyncReferenceTimeline(
++                    key = track.key,
++                    language = track.language,
++                    label = track.label,
++                    cues = track.cues.map { cue ->
++                        SubtitleSyncCue(
++                            startTimeMs = cue.startMs,
++                            endTimeMs = cue.endMs.coerceAtLeast(cue.startMs + 1L),
++                            text = cue.text.orEmpty(),
++                        )
++                    }.sortedBy { it.startTimeMs },
++                    sampled = track.sampled,
++                )
++            }.filter { it.cues.size >= MIN_REFERENCE_CUES }
++            EmbeddedReferenceLoad(
++                references = references,
++                reason = when {
++                    payload.reason != null && payload.reason != "ok" -> payload.reason
++                    payload.tracks.isEmpty() -> "no_references"
++                    references.isEmpty() -> "references_below_min_cues"
++                    else -> "ok"
++                },
++                subtitleStreams = payload.subtitleStreams,
++                candidateStreams = payload.candidateStreams,
++                packetsRead = payload.packetsRead,
++                reachedEof = payload.reachedEof,
 +            )
-+        }.filter { it.cues.size >= MIN_REFERENCE_CUES }
++        } ?: EmbeddedReferenceLoad(reason = "decode_failed")
 +    }
 +
 +    @OptIn(ExperimentalForeignApi::class)
@@ -1755,9 +2912,19 @@ index 0000000..152263f
 +        return path.takeIf { wrote }
 +    }
 +
-+    private suspend fun showFailure(token: Long, resource: org.jetbrains.compose.resources.StringResource) {
-+        if (token != operationToken) return
-+        NuvioToastController.show(getString(resource))
++    private suspend fun showManualFallback(token: Long, sourceUrl: String) {
++        if (
++            !shouldShowManualFallbackNotice(
++                capturedToken = token,
++                currentToken = operationToken,
++                lastNotifiedSourceUrl = manualFallbackNoticeSourceUrl,
++                currentSourceUrl = sourceUrl,
++            )
++        ) {
++            return
++        }
++        manualFallbackNoticeSourceUrl = sourceUrl
++        NuvioToastController.show(getString(Res.string.autosync_toast_manual_fallback))
 +    }
 +
 +    private fun encodeHeaders(headers: Map<String, String>): String? {
@@ -1772,15 +2939,28 @@ index 0000000..152263f
 +            match.timeline.referenceCoverage >= STRONG_REFERENCE_COVERAGE
 +
 +    private data class CandidateTimeline(
-+        val url: String,
-+        val language: String?,
++        val candidate: AutoSyncSubtitleCandidate,
 +        val body: String,
 +        val cues: List<SubtitleSyncCue>,
++    )
++
++    private data class EmbeddedReferenceLoad(
++        val references: List<AutoSyncReferenceTimeline> = emptyList(),
++        val reason: String,
++        val subtitleStreams: Int = 0,
++        val candidateStreams: Int = 0,
++        val packetsRead: Long = 0L,
++        val reachedEof: Boolean = false,
 +    )
 +
 +    @Serializable
 +    private data class EmbeddedReferencePayload(
 +        val tracks: List<EmbeddedReferenceTrack> = emptyList(),
++        val reason: String? = null,
++        val subtitleStreams: Int = 0,
++        val candidateStreams: Int = 0,
++        val packetsRead: Long = 0L,
++        val reachedEof: Boolean = false,
 +    )
 +
 +    @Serializable
@@ -1801,6 +2981,7 @@ index 0000000..152263f
 +
 +    private companion object {
 +        const val MAX_ALTERNATIVES = 6
++        const val MAX_ADDON_REFERENCES = 6
 +        const val MIN_REFERENCE_CUES = 4
 +        const val CANDIDATE_TIMEOUT_MS = 20_000L
 +        const val STRONG_MATCH_SCORE = 0.92
@@ -2034,10 +3215,17 @@ index 0000000..6743b7a
 +    return controller
 +}
 diff --git a/docs/subtitle-autosync.md b/docs/subtitle-autosync.md
-index a11eb9c..d36d574 100644
+index a11eb9c..a4fedf0 100644
 --- a/docs/subtitle-autosync.md
 +++ b/docs/subtitle-autosync.md
-@@ -11,10 +11,15 @@ and Thorough/Quick search controls appear only while the switch is on. Tolerance
+@@ -6,28 +6,44 @@ or the timing of individual cue groups. Failed analysis keeps the selected subti
+ and its timing. It does not analyze audio or use speech models.
+ 
+ Enable **Auto Sync Subtitle** in **Settings → Playback → Subtitle / Audio** after
+-choosing a preferred subtitle language. The switch is off by default. Its tolerance
++choosing a preferred subtitle language. The v13 switch is on by default after
++migration. Its tolerance
+ and Thorough/Quick search controls appear only while the switch is on. Tolerance
  keeps the original timing when the whole-film correction is within the chosen
  100–500 ms limit; Off applies all confident corrections.
  
@@ -2046,26 +3234,35 @@ index a11eb9c..d36d574 100644
 -players, and iOS continue using their existing subtitle behavior. There is no audio
 -fallback when a video lacks usable embedded subtitle timing.
 +On Android, AutoSync supports the internal ExoPlayer with HTTP(S) streams and the
-+subtitle formats handled by its sidecar renderer. On iOS, it supports HTTP(S) media in
-+the built-in mpv player. Embedded SRT, WebVTT and ASS/SSA timing is read separately
++subtitle formats handled by its sidecar renderer. On iOS, it supports HTTP(S) and
++local `file://` media in the built-in mpv player. Embedded SRT, WebVTT and ASS/SSA timing is read separately
 +through FFmpeg, and a confident result rewrites only the add-on subtitle timestamps so
 +mpv keeps its rendering and styling. If the reference read stops early, iOS applies a
 +validated constant delay only; it does not infer frame-rate drift from a partial track.
-+Bitmap subtitle references, TTML retiming, local-file playback, and external players
++Bitmap subtitle references, TTML retiming, and external players
 +keep their existing subtitle behavior. There is no audio fallback when a video lacks
 +usable embedded subtitle timing.
  
- At startup, AutoSync can try other add-on subtitles in the same language. When the
- user selects a subtitle manually, it checks only that subtitle. An automatic
-@@ -22,10 +27,13 @@ replacement updates the subtitle selection but does not persist an automatic pic
- as a new manual preference for later episodes.
+-At startup, AutoSync can try other add-on subtitles in the same language. When the
+-user selects a subtitle manually, it checks only that subtitle. An automatic
+-replacement updates the subtitle selection but does not persist an automatic pick
+-as a new manual preference for later episodes.
++When embedded timing is unavailable, iOS may compare the selected subtitle with another
++add-on text subtitle only when the selected and reference subtitles belong to the same
++requested video identity and season/episode, and the reference's normalized release
++identity or release-group/source/cut tuple matches the non-opaque video URL. The selected
++subtitle does not need to match the video release because it is the subtitle being
++retimed. The text reference must still pass the normal timing confidence gates. A
++subtitle match alone is never treated as video evidence. If episode, release/version,
++or timing evidence is missing, AutoSync keeps the original subtitle timing and directs
++the user to the existing manual delay control.
  
  Success is indicated by **Auto synced** on the selected subtitle card. Only failures
 -show toasts. Changing subtitles, selecting an embedded track, disabling subtitles,
 -manually adjusting delay, or leaving playback cancels pending analysis. Index
 -requests start only after an add-on subtitle is selected for AutoSync. Applying a
 -result swaps sidecar cues without reloading the media source or discarding its buffer.
-+show toasts. The original add-on subtitle is attached while analysis runs, so playback
++show one manual-fallback toast per media source. The original add-on subtitle is attached while analysis runs, so playback
 +never waits with the previous subtitle or with subtitles disabled. Changing subtitles,
 +selecting an embedded track, disabling subtitles, manually adjusting delay, changing the
 +media source, or leaving playback cancels pending analysis. Index requests start only
@@ -2073,21 +3270,34 @@ index a11eb9c..d36d574 100644
 +reloading the media source or discarding its buffer; iOS attaches a retimed temporary
 +subtitle file to mpv.
  
- AutoSync has no debug logging setting and does not emit diagnostic logs.
+-AutoSync has no debug logging setting and does not emit diagnostic logs.
++AutoSync logs bounded extractor facts such as the reason code, subtitle track counts,
++candidate track counts, demux packet count, and EOF state. It does not log the video URL
++or subtitle body.
  
+ ## Sources
+ 
+@@ -59,5 +75,5 @@ Physical-device checks still required:
+    another add-on subtitle, adjust delay, or leave the player. The old result must
+    not return or overwrite the new choice.
+ 5. Test a video without embedded subtitles and unsupported ASS/libass rendering.
+-   Verify a simple failure toast and the original timing.
++   Verify one Arabic manual-fallback notice and the original timing.
+ 6. Capture the settings rows and selected subtitle badge for PR review.
 diff --git a/iosApp/Configuration/Version.xcconfig b/iosApp/Configuration/Version.xcconfig
-index b1e2a89..f424031 100644
+index b1e2a89..94e694c 100644
 --- a/iosApp/Configuration/Version.xcconfig
 +++ b/iosApp/Configuration/Version.xcconfig
 @@ -1,2 +1,2 @@
 -CURRENT_PROJECT_VERSION=145
-+CURRENT_PROJECT_VERSION=2026102003
- MARKETING_VERSION=0.6.2
+-MARKETING_VERSION=0.6.2
++CURRENT_PROJECT_VERSION=2026102101
++MARKETING_VERSION=0.6.3
 diff --git a/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift b/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
-index d390a95..77a5f44 100644
+index d390a95..7852587 100644
 --- a/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
 +++ b/iosApp/iosApp/Player/FFmpegSeekPreviewGenerator.swift
-@@ -370,3 +370,224 @@ final class FFmpegSeekPreviewGeneratorCreator: NSObject, NuvioSeekPreviewGenerat
+@@ -370,3 +370,314 @@ final class FFmpegSeekPreviewGeneratorCreator: NSObject, NuvioSeekPreviewGenerat
          FFmpegSeekPreviewGenerator(url: url, headers: headers)
      }
  }
@@ -2102,6 +3312,7 @@ index d390a95..77a5f44 100644
 +    private let url: String
 +    private let headers: [String: String]
 +    private let abortFlag = EmbeddedSubtitleAbortFlag()
++    private var openFailureReason: String?
 +
 +    private static let ioTimeoutMicroseconds = "15000000"
 +    private static let loadTimeoutSeconds = 45.0
@@ -2114,22 +3325,25 @@ index d390a95..77a5f44 100644
 +    }
 +
 +    func cancel() {
-+        abortFlag.set()
++        abortFlag.set(reason: "cancelled")
 +    }
 +
 +    func load() -> String {
 +        let flag = abortFlag
-+        let timeout = DispatchWorkItem { flag.set() }
++        let timeout = DispatchWorkItem { flag.set(reason: "timeout") }
 +        DispatchQueue.global(qos: .utility).asyncAfter(
 +            deadline: .now() + Self.loadTimeoutSeconds,
 +            execute: timeout
 +        )
 +        defer { timeout.cancel() }
 +
-+        guard let context = openInput() else { return emptyPayload() }
++        guard let context = openInput() else {
++            return diagnosticPayload(reason: openFailureReason ?? "open_failed")
++        }
 +        var contextPointer: UnsafeMutablePointer<AVFormatContext>? = context
 +        defer { avformat_close_input(&contextPointer) }
 +
++        var subtitleStreamCount = 0
 +        var subtitleStreams: [(index: Int32, key: String)] = []
 +        for index in 0..<Int32(context.pointee.nb_streams) {
 +            guard let stream = context.pointee.streams[Int(index)] else { continue }
@@ -2138,6 +3352,7 @@ index d390a95..77a5f44 100644
 +                stream.pointee.discard = AVDISCARD_ALL
 +                continue
 +            }
++            subtitleStreamCount += 1
 +            let name = codecName(parameters.pointee.codec_id).lowercased()
 +            let isBitmap = ["pgs", "dvd", "dvb", "xsub", "teletext"].contains {
 +                name.contains($0)
@@ -2151,8 +3366,21 @@ index d390a95..77a5f44 100644
 +            }
 +            subtitleStreams.append((index: index, key: "embedded:\(index)"))
 +        }
-+        guard !subtitleStreams.isEmpty, let packet = av_packet_alloc() else {
-+            return emptyPayload()
++        guard !subtitleStreams.isEmpty else {
++            return diagnosticPayload(
++                reason: subtitleStreamCount == 0
++                    ? "no_subtitle_streams"
++                    : "no_dialogue_text_streams",
++                subtitleStreamCount: subtitleStreamCount,
++                candidateStreamCount: subtitleStreams.count
++            )
++        }
++        guard let packet = av_packet_alloc() else {
++            return diagnosticPayload(
++                reason: "packet_alloc_failed",
++                subtitleStreamCount: subtitleStreamCount,
++                candidateStreamCount: subtitleStreams.count
++            )
 +        }
 +        var packetPointer: UnsafeMutablePointer<AVPacket>? = packet
 +        defer { av_packet_free(&packetPointer) }
@@ -2162,13 +3390,17 @@ index d390a95..77a5f44 100644
 +            uniqueKeysWithValues: subtitleStreams.map { ($0.index, $0.key) }
 +        )
 +        var sampledStreams = Set<Int32>()
++        var missingDurationSampling = false
++        var cueLimitSampling = false
 +        var reachedEOF = false
++        var packetsRead: Int64 = 0
 +        while !abortFlag.isSet {
 +            let readResult = av_read_frame(context, packet)
 +            if readResult < 0 {
 +                reachedEOF = readResult == Self.eofErrorCode
 +                break
 +            }
++            packetsRead += 1
 +
 +            let streamIndex = packet.pointee.stream_index
 +            if streamLookup[streamIndex] != nil,
@@ -2187,10 +3419,12 @@ index d390a95..77a5f44 100644
 +                    if startMs >= 0 {
 +                        if !hasDuration {
 +                            sampledStreams.insert(streamIndex)
++                            missingDurationSampling = true
 +                        }
 +                        let count = timings[streamIndex]?.count ?? 0
 +                        if count >= Self.maxCuesPerTrack {
 +                            sampledStreams.insert(streamIndex)
++                            cueLimitSampling = true
 +                        } else {
 +                            timings[streamIndex, default: []].append(
 +                                (startMs, max(startMs + 1, startMs + durationMs))
@@ -2215,11 +3449,37 @@ index d390a95..77a5f44 100644
 +            ]
 +        }
 +        streamLookup.removeAll()
-+        return encode(tracks: tracks)
++        let reason: String
++        if abortFlag.isSet {
++            reason = abortFlag.reason ?? "aborted"
++        } else if cueLimitSampling {
++            reason = "sampled_cue_limit"
++        } else if missingDurationSampling {
++            reason = "sampled_missing_duration"
++        } else if !reachedEOF {
++            reason = "read_error"
++        } else if tracks.isEmpty {
++            reason = "no_timed_subtitle_packets"
++        } else if tracks.contains(where: { ($0["sampled"] as? Bool) == true }) {
++            reason = "sampled"
++        } else {
++            reason = "ok"
++        }
++        return encode(
++            tracks: tracks,
++            reason: reason,
++            subtitleStreamCount: subtitleStreamCount,
++            candidateStreamCount: subtitleStreams.count,
++            packetsRead: packetsRead,
++            reachedEOF: reachedEOF
++        )
 +    }
 +
 +    private func openInput() -> UnsafeMutablePointer<AVFormatContext>? {
-+        guard let context = avformat_alloc_context() else { return nil }
++        guard let context = avformat_alloc_context() else {
++            openFailureReason = "context_alloc_failed"
++            return nil
++        }
 +        context.pointee.interrupt_callback.callback = { opaque in
 +            guard let opaque else { return 0 }
 +            return Unmanaged<EmbeddedSubtitleAbortFlag>
@@ -2248,7 +3508,10 @@ index d390a95..77a5f44 100644
 +
 +        var contextPointer: UnsafeMutablePointer<AVFormatContext>? = context
 +        let result = avformat_open_input(&contextPointer, inputPath(), nil, &options)
-+        guard result >= 0, let opened = contextPointer else { return nil }
++        guard result >= 0, let opened = contextPointer else {
++            openFailureReason = "open_failed"
++            return nil
++        }
 +        _ = avformat_find_stream_info(opened, nil)
 +        return opened
 +    }
@@ -2281,24 +3544,52 @@ index d390a95..77a5f44 100644
 +        return result
 +    }
 +
-+    private func encode(tracks: [[String: Any]]) -> String {
++    private func encode(
++        tracks: [[String: Any]],
++        reason: String,
++        subtitleStreamCount: Int,
++        candidateStreamCount: Int,
++        packetsRead: Int64,
++        reachedEOF: Bool
++    ) -> String {
 +        guard
-+            let data = try? JSONSerialization.data(withJSONObject: ["tracks": tracks]),
++            let data = try? JSONSerialization.data(withJSONObject: [
++                "tracks": tracks,
++                "reason": reason,
++                "subtitleStreams": subtitleStreamCount,
++                "candidateStreams": candidateStreamCount,
++                "packetsRead": packetsRead,
++                "reachedEof": reachedEOF,
++            ]),
 +            let json = String(data: data, encoding: .utf8)
 +        else {
-+            return emptyPayload()
++            return "{\"tracks\":[],\"reason\":\"encode_failed\",\"subtitleStreams\":\(subtitleStreamCount),\"candidateStreams\":\(candidateStreamCount),\"packetsRead\":\(packetsRead),\"reachedEof\":\(reachedEOF)}"
 +        }
 +        return json
 +    }
 +
-+    private func emptyPayload() -> String {
-+        "{\"tracks\":[]}"
++    private func diagnosticPayload(
++        reason: String,
++        subtitleStreamCount: Int = 0,
++        candidateStreamCount: Int = 0,
++        packetsRead: Int64 = 0,
++        reachedEOF: Bool = false
++    ) -> String {
++        encode(
++            tracks: [],
++            reason: reason,
++            subtitleStreamCount: subtitleStreamCount,
++            candidateStreamCount: candidateStreamCount,
++            packetsRead: packetsRead,
++            reachedEOF: reachedEOF
++        )
 +    }
 +}
 +
 +private final class EmbeddedSubtitleAbortFlag {
 +    private let lock = NSLock()
 +    private var value = false
++    private var abortReason: String?
 +
 +    var isSet: Bool {
 +        lock.lock()
@@ -2306,9 +3597,18 @@ index d390a95..77a5f44 100644
 +        return value
 +    }
 +
-+    func set() {
++    var reason: String? {
 +        lock.lock()
-+        value = true
++        defer { lock.unlock() }
++        return abortReason
++    }
++
++    func set(reason: String) {
++        lock.lock()
++        if !value {
++            value = true
++            abortReason = reason
++        }
 +        lock.unlock()
 +    }
 +}
