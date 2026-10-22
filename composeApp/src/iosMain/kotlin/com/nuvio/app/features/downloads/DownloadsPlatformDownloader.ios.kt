@@ -11,6 +11,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import com.nuvio.app.features.autosync.OfflineSubtitleReferenceIos
+import com.nuvio.app.features.autosync.SubtitleEnhancements
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.downloads_error_finalize_file_failed
 import nuvio.composeapp.generated.resources.network_request_failed_http
@@ -69,9 +71,14 @@ private fun prepareDownloadSubtitles(downloadId: String, request: DownloadPlatfo
     val destinationUri = resolveDownloadsBaseDirectory().withAccess { downloadsDirectory ->
         NSURL.fileURLWithPath("$downloadsDirectory/${request.destinationFileName}").absoluteString
     } ?: return
+    SubtitleEnhancements.ensureLoaded()
+    val offlineSync = SubtitleEnhancements.state.value.offlineSync
     val job = subtitlePreparationScope.launch {
         try {
-            DownloadSubtitles.prepare(request.item, destinationUri)
+            val references = if (offlineSync) {
+                OfflineSubtitleReferenceIos.load(request.sourceUrl, request.sourceHeaders)
+            } else emptyList()
+            DownloadSubtitles.prepare(request.item, destinationUri, references)
         } catch (error: CancellationException) {
             throw error
         } catch (_: Throwable) {

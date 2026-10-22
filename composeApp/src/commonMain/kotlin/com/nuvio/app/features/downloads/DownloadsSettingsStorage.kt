@@ -5,4 +5,10 @@ internal expect object DownloadsSettingsStorage {
     fun saveAllowMobileDataDownloads(enabled: Boolean)
     fun loadShowDownloadButton(): Boolean?
     fun saveShowDownloadButton(enabled: Boolean)
+    fun loadStorageLimitGb(): Int?
+    fun saveStorageLimitGb(value: Int)
+    fun loadSeasonDownloads(): Boolean?
+    fun saveSeasonDownloads(value: Boolean)
+    fun loadWatchedCleanup(): Boolean?
+    fun saveWatchedCleanup(value: Boolean)
 }

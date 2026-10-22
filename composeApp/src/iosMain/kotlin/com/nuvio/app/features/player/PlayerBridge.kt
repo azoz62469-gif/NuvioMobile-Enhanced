@@ -98,6 +98,10 @@ interface NuvioPlayerBridge {
     fun recognizeAudioWords(
         sourceUrl: String,
         headersJson: String?,
+        locale: String,
+        onDeviceOnly: Boolean,
+        analysisMinutes: Int,
+        sampleStartMs: Long,
         completion: (String) -> Unit,
     )
     fun cancelAudioWordRecognition()

@@ -95,6 +95,7 @@ fun SubtitleStylePanel(
             )
         }
 
+        AutoSyncDiagnosticsPanel()
         SubtitleStyleSection(title = stringResource(Res.string.compose_player_subtitle_delay)) {
             SubtitleStyleStepper(
                 value = formatSubtitleDelay(subtitleDelayMs),

@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
@@ -88,6 +88,12 @@ jobs:
             echo "kotlin.native.disableCompilerDaemon=true"
           } >> "${gradle_user_home}/gradle.properties"
           cat "${gradle_user_home}/gradle.properties"
+
+      - name: Verify subtitle algorithms and regressions
+        run: ./gradlew -p verification/subtitles test --console=plain
+
+      - name: Parse changed Swift sources before native compilation
+        run: xcrun swiftc -frontend -parse iosApp/iosApp/SubtitleStudio.swift iosApp/iosApp/AppPrivacyLock.swift iosApp/iosApp/Player/FFmpegAudioSpeechRecognizer.swift iosApp/iosApp/Player/MPVPlayerBridge.swift
 
       - name: Prepare iOS dependencies
         run: ./scripts/prepare-ios-dependencies.sh

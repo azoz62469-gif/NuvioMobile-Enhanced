@@ -307,6 +307,12 @@ object DownloadsRepository {
     }
 
     private fun startDownload(item: DownloadItem) {
+        DownloadsSettingsRepository.ensureLoaded()
+        cleanupWatchedDownloads()
+        if (storageLimitReached()) {
+            mutateItem(item.id) { it.copy(status = DownloadStatus.Paused, errorMessage = "تم بلوغ حد مساحة التنزيلات") }
+            return
+        }
         val request = DownloadPlatformRequest(item)
 
         val handle = DownloadsPlatformDownloader.start(
@@ -323,6 +329,10 @@ object DownloadsRepository {
                             errorMessage = null,
                         )
                     }
+                }
+                if (storageLimitReached()) {
+                    pauseDownload(item.id)
+                    mutateItem(item.id) { it.copy(errorMessage = "تم بلوغ حد مساحة التنزيلات") }
                 }
             },
             onSuccess = { localFileUri, totalBytes ->
@@ -382,6 +392,37 @@ object DownloadsRepository {
 
         if (changed) {
             publish(updated)
+            persist()
+        }
+    }
+
+    private fun storageLimitReached(): Boolean {
+        val limit = DownloadsSettingsRepository.storageLimitGb.value
+        if (limit <= 0) return false
+        return _uiState.value.items.sumOf { it.downloadedBytes.coerceAtLeast(0L) } >= limit.toLong() * 1024 * 1024 * 1024
+    }
+
+    private fun cleanupWatchedDownloads() {
+        if (!com.nuvio.app.isIos || !DownloadsSettingsRepository.watchedCleanup.value ||
+            DownloadPlaybackGuard.activePlayers.isNotEmpty()) return
+        val watched = com.nuvio.app.features.watched.WatchedRepository
+        watched.ensureLoaded()
+        val now = DownloadsClock.nowEpochMs()
+        val removeIds = _uiState.value.items.filter { item ->
+            val mark = watched.uiState.value.items.firstOrNull {
+                it.id == item.parentMetaId && it.type == item.parentMetaType &&
+                    it.season == item.seasonNumber && it.episode == item.episodeNumber
+            }
+            eligibleForDownloadCleanup(item.status == DownloadStatus.Completed, item.isEpisode,
+                item.createdAtEpochMs, mark?.markedAtEpochMs, now)
+        }.mapNotNull { item ->
+            if (DownloadsPlatformDownloader.removeFile(playableLocalFileUri(item) ?: item.localFileUri)) {
+                DownloadsPlatformDownloader.removePartialFile(item.fileName)
+                item.id
+            } else null
+        }.toSet()
+        if (removeIds.isNotEmpty()) {
+            publish(_uiState.value.items.filterNot { it.id in removeIds })
             persist()
         }
     }
@@ -564,7 +605,7 @@ private fun String.fileExtensionFromUrl(): String {
     }
 }
 
-private fun String.isSupportedDownloadUrl(): Boolean {
+internal fun String.isSupportedDownloadUrl(): Boolean {
     val normalized = trim().lowercase()
     if (normalized.startsWith("magnet:")) return false
     if (normalized.endsWith(".m3u8") || normalized.contains(".m3u8?")) return false

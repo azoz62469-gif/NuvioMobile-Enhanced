@@ -15,6 +15,10 @@ internal object AutoSyncPreferencesIos {
         if (initialized) return
         initialized = true
         val defaults = NSUserDefaults.standardUserDefaults
+        SubtitleEnhancements.installPersistence(
+            load = { defaults.stringForKey(ProfileScopedKey.of("subtitle_enhancements_v17")) },
+            save = { defaults.setObject(it, forKey = ProfileScopedKey.of("subtitle_enhancements_v17")) },
+        )
         val migrationKey = ProfileScopedKey.of("auto_sync_default_on_migrated_v12")
         if (defaults.objectForKey(migrationKey) == null) {
             defaults.setBool(

@@ -2,6 +2,11 @@ package com.nuvio.app.features.settings
 
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.*
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxWidth
+import com.nuvio.app.features.downloads.DownloadsRepository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,16 +28,50 @@ internal fun LazyListScope.downloadsSettingsContent(
     isTablet: Boolean,
 ) {
     item {
+        DownloadsRepository.ensureLoaded()
         val downloadLocationUri by DownloadsSettingsRepository.downloadLocationUri.collectAsStateWithLifecycle()
         val allowMobileData by DownloadsSettingsRepository.allowMobileDataDownloads.collectAsStateWithLifecycle()
         val showDownloadButton by DownloadsSettingsRepository.showDownloadButton.collectAsStateWithLifecycle()
         var showPicker by remember { mutableStateOf(false) }
+        var showLimit by remember { mutableStateOf(false) }
+        val limit by DownloadsSettingsRepository.storageLimitGb.collectAsStateWithLifecycle()
+        val seasonDownloads by DownloadsSettingsRepository.seasonDownloads.collectAsStateWithLifecycle()
+        val watchedCleanup by DownloadsSettingsRepository.watchedCleanup.collectAsStateWithLifecycle()
+        val downloads by DownloadsRepository.uiState.collectAsStateWithLifecycle()
 
         SettingsSection(
             title = stringResource(Res.string.compose_settings_root_downloads_title),
             isTablet = isTablet,
         ) {
             SettingsGroup(isTablet = isTablet) {
+                if (com.nuvio.app.isIos) {
+                    SettingsSwitchRow(
+                        title = "حذف الحلقات المشاهدة تلقائياً",
+                        description = "بعد أسبوع من مشاهدتها، عند بدء تنزيل جديد وخارج وقت التشغيل",
+                        checked = watchedCleanup,
+                        isTablet = isTablet,
+                        onCheckedChange = DownloadsSettingsRepository::setWatchedCleanup,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                }
+                SettingsSwitchRow(
+                    title = "تنزيل موسم كامل",
+                    description = "إظهار التنزيل الجماعي ضمن قائمة الموسم",
+                    checked = seasonDownloads,
+                    isTablet = isTablet,
+                    onCheckedChange = DownloadsSettingsRepository::setSeasonDownloads,
+                )
+                SettingsGroupDivider(isTablet = isTablet)
+                SettingsNavigationRow(
+                    title = "حد مساحة التنزيلات",
+                    description = if (limit == 0) "بدون حد اختياري" else "$limit غيغابايت",
+                    isTablet = isTablet,
+                    onClick = { showLimit = true },
+                )
+                SettingsGroupDivider(isTablet = isTablet)
+                Text("المساحة المستخدمة: ${downloads.items.sumOf { it.downloadedBytes } / (1024 * 1024)} ميغابايت")
+                Text("الملفات المكتملة: ${downloads.completedItems.size} • قيد التنزيل أو الانتظار: ${downloads.activeItems.size}")
+                SettingsGroupDivider(isTablet = isTablet)
                 SettingsSwitchRow(
                     title = stringResource(Res.string.downloads_allow_mobile_data_title),
                     description = stringResource(Res.string.downloads_allow_mobile_data_description),
@@ -75,6 +114,21 @@ internal fun LazyListScope.downloadsSettingsContent(
                 onDismiss = { showPicker = false },
             )
         }
+        if (showLimit) AlertDialog(
+            onDismissRequest = { showLimit = false },
+            title = { Text("حد المساحة") },
+            text = {
+                Column {
+                    for (value in listOf(0, 4, 8, 16, 32, 64, 128, 256)) {
+                        TextButton(modifier = Modifier.fillMaxWidth(), onClick = {
+                            DownloadsSettingsRepository.setStorageLimitGb(value)
+                            showLimit = false
+                        }) { Text(if (value == 0) "بدون حد" else "$value غيغابايت") }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showLimit = false }) { Text("إغلاق") } },
+        )
     }
 }
 

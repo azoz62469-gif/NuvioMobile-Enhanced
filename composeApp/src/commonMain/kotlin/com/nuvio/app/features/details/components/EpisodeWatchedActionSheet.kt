@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAddCheckCircle
 import androidx.compose.material.icons.rounded.Star
@@ -153,6 +154,7 @@ fun SeasonWatchedActionSheet(
     onDismiss: () -> Unit,
     onToggleSeasonWatched: () -> Unit,
     onMarkPreviousSeasonsWatched: () -> Unit,
+    onDownloadSeason: (() -> Unit)? = null,
     userRating: Int? = null,
     onRate: (() -> Unit)? = null,
 ) {
@@ -182,6 +184,16 @@ fun SeasonWatchedActionSheet(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             )
             NuvioBottomSheetDivider()
+            if (onDownloadSeason != null) {
+                NuvioBottomSheetActionRow(
+                    icon = Icons.Default.Download,
+                    title = "تنزيل الموسم",
+                    onClick = {
+                        onDownloadSeason()
+                        coroutineScope.launch { dismissNuvioBottomSheet(sheetState, onDismiss) }
+                    },
+                )
+            }
             NuvioBottomSheetActionRow(
                 icon = Icons.Default.PlaylistAddCheckCircle,
                 title = if (isSeasonWatched) {

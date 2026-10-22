@@ -13,16 +13,23 @@ import Speech
 final class FFmpegAudioSpeechRecognizer {
     private let url: String
     private let headers: [String: String]
+    private let locale: String
+    private let onDeviceOnly: Bool
+    private let maxAnalysisMs: Int64
+    private let sampleStartMs: Int64
     private let abortFlag = AudioWordRecognitionAbortFlag()
 
     private static let sampleRate = 16_000
-    private static let maxAnalysisMs: Int64 = 12 * 60 * 1_000
     private static let maxWallSeconds = 120.0
     private static let ioTimeoutMicroseconds = "15000000"
 
-    init(url: String, headers: [String: String]) {
+    init(url: String, headers: [String: String], locale: String, onDeviceOnly: Bool, analysisMinutes: Int, sampleStartMs: Int64) {
         self.url = url
         self.headers = headers
+        self.locale = locale
+        self.onDeviceOnly = onDeviceOnly
+        self.maxAnalysisMs = Int64(max(1, min(12, analysisMinutes))) * 60 * 1_000
+        self.sampleStartMs = max(0, sampleStartMs)
     }
 
     func cancel() {
@@ -33,7 +40,7 @@ final class FFmpegAudioSpeechRecognizer {
         guard authorize() else {
             return payload(reason: "speech_permission_denied")
         }
-        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US")) else {
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)) else {
             return payload(reason: "recognizer_unavailable")
         }
         let supportsOnDevice: Bool
@@ -44,6 +51,9 @@ final class FFmpegAudioSpeechRecognizer {
         }
         guard recognizer.isAvailable || supportsOnDevice else {
             return payload(reason: "recognizer_not_available")
+        }
+        if onDeviceOnly && !supportsOnDevice {
+            return payload(reason: "on_device_language_unavailable")
         }
 
         let request = SFSpeechAudioBufferRecognitionRequest()
@@ -120,6 +130,20 @@ final class FFmpegAudioSpeechRecognizer {
                 0
             )
         }
+        let requestedLanguage = locale.split(separator: "-").first.map(String.init) ?? "en"
+        let aliases = ["en": "eng", "ar": "ara", "fr": "fra", "es": "spa", "de": "deu",
+                       "it": "ita", "ja": "jpn", "ko": "kor", "zh": "zho", "hi": "hin", "tr": "tur", "pt": "por"]
+        for index in 0..<Int(context.pointee.nb_streams) {
+            guard let candidate = context.pointee.streams[index],
+                  candidate.pointee.codecpar?.pointee.codec_type == AVMEDIA_TYPE_AUDIO,
+                  let entry = av_dict_get(candidate.pointee.metadata, "language", nil, 0),
+                  let value = entry.pointee.value else { continue }
+            let language = String(cString: value).lowercased()
+            if language == requestedLanguage || language == aliases[requestedLanguage] {
+                streamIndex = Int32(index)
+                break
+            }
+        }
         guard
             streamIndex >= 0,
             let stream = context.pointee.streams[Int(streamIndex)],
@@ -139,6 +163,14 @@ final class FFmpegAudioSpeechRecognizer {
         guard avcodec_open2(decoderContext, decoder, nil) >= 0 else {
             request.endAudio()
             return payload(reason: "decoder_open_failed")
+        }
+        if sampleStartMs > 0 {
+            let seekTime = av_rescale_q(sampleStartMs, AVRational(num: 1, den: 1_000), stream.pointee.time_base)
+            guard av_seek_frame(context, streamIndex, seekTime, AVSEEK_FLAG_BACKWARD) >= 0 else {
+                request.endAudio()
+                return payload(reason: "sample_seek_failed")
+            }
+            avcodec_flush_buffers(decoderContext)
         }
 
         for index in 0..<Int(context.pointee.nb_streams) where index != Int(streamIndex) {
@@ -167,7 +199,8 @@ final class FFmpegAudioSpeechRecognizer {
 
         let timeBase = stream.pointee.time_base
         let started = DispatchTime.now().uptimeNanoseconds
-        var fallbackMediaMs: Int64 = 0
+        var fallbackMediaMs: Int64 = sampleStartMs
+        var audioOrigins: [(bufferMs: Int64, mediaMs: Int64)] = []
         var packetsRead: Int64 = 0
         var appendedSamples: Int64 = 0
         var reachedLimit = false
@@ -176,7 +209,7 @@ final class FFmpegAudioSpeechRecognizer {
             let elapsed = Double(
                 DispatchTime.now().uptimeNanoseconds - started
             ) / 1_000_000_000.0
-            if elapsed >= Self.maxWallSeconds || fallbackMediaMs >= Self.maxAnalysisMs {
+            if elapsed >= Self.maxWallSeconds || fallbackMediaMs >= sampleStartMs + maxAnalysisMs {
                 reachedLimit = true
                 break
             }
@@ -218,6 +251,7 @@ final class FFmpegAudioSpeechRecognizer {
                             AVRational(num: 1, den: 1_000)
                         )
                     fallbackMediaMs = max(fallbackMediaMs, startMs) + max(1, durationMs)
+                    if startMs < sampleStartMs { return }
 
                     if
                         let mono = AudioWordFramePcm.monoSamples(frame: frame),
@@ -230,12 +264,13 @@ final class FFmpegAudioSpeechRecognizer {
                             format: audioFormat,
                             to: request
                         ) {
+                            audioOrigins.append((appendedSamples * 1_000 / Int64(Self.sampleRate), startMs))
                             appendedSamples += Int64(resampled.count)
                         }
                     }
                 }
                 av_frame_unref(frame)
-                if fallbackMediaMs >= Self.maxAnalysisMs {
+                if fallbackMediaMs >= sampleStartMs + maxAnalysisMs {
                     reachedLimit = true
                     break
                 }
@@ -272,7 +307,17 @@ final class FFmpegAudioSpeechRecognizer {
             )
         }
         return payload(
-            words: words,
+            words: words.map { word in
+                var low = 0
+                var high = audioOrigins.count
+                while low < high {
+                    let mid = (low + high) / 2
+                    if audioOrigins[mid].bufferMs <= word.startMs { low = mid + 1 } else { high = mid }
+                }
+                let origin = audioOrigins.isEmpty ? (bufferMs: Int64(0), mediaMs: sampleStartMs) : audioOrigins[max(0, low - 1)]
+                return RecognizedWord(startMs: origin.mediaMs + word.startMs - origin.bufferMs,
+                                      durationMs: word.durationMs, text: word.text)
+            },
             reason: reachedLimit ? "bounded_sample" : "ok",
             analyzedMs: fallbackMediaMs,
             packetsRead: packetsRead

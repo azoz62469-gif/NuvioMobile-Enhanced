@@ -243,6 +243,8 @@ internal object AutoSyncWordMatcher {
 
     private fun normalize(raw: String): String =
         raw.lowercase()
+            .replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+            .replace('ى', 'ي').replace("ـ", "")
             .replace(nonWord, "")
             .trim('\'')
 

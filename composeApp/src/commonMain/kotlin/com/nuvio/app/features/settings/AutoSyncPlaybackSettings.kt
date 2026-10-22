@@ -58,6 +58,8 @@ internal fun AutoSyncPlaybackSettingsRows(
         isTablet = isTablet,
         onCheckedChange = AutoSyncPreferencesRepository::setPreferredSubtitleAutoSyncOnStart,
     )
+    SettingsGroupDivider(isTablet = isTablet)
+    SubtitleEnhancementSettingsRow(isTablet)
     if (!preferredSubtitleAutoSyncOnStart) return
     SettingsGroupDivider(isTablet = isTablet)
     SettingsSwitchRow(

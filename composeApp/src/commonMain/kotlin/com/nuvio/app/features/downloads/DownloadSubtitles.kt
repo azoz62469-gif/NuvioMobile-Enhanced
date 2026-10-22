@@ -2,6 +2,10 @@ package com.nuvio.app.features.downloads
 
 import com.nuvio.app.features.addons.httpGetTextWithHeaders
 import com.nuvio.app.features.player.PlayerSubtitleCueParser
+import com.nuvio.app.features.autosync.AutoSyncSubtitleCueParser
+import com.nuvio.app.features.autosync.AutoSyncSubtitleTextRetimer
+import com.nuvio.app.features.autosync.AutoSyncReferenceTimeline
+import com.nuvio.app.features.autosync.AutoSyncConsensus
 import com.nuvio.app.features.player.loadAddonSubtitles
 import com.nuvio.app.features.streams.StreamSubtitle
 import kotlinx.coroutines.CancellationException
@@ -20,7 +24,11 @@ import kotlinx.serialization.json.Json
 internal object DownloadSubtitles {
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun prepare(item: DownloadItem, localVideoUri: String): Unit = withContext(Dispatchers.Default) {
+    suspend fun prepare(
+        item: DownloadItem,
+        localVideoUri: String,
+        references: List<AutoSyncReferenceTimeline> = emptyList(),
+    ): Unit = withContext(Dispatchers.Default) {
         val storage = DownloadSubtitleStorage(localVideoUri)
         val manifest = readManifest(storage)
         val saved = manifest.tracks.filter { storage.localFileUri(it.fileName) != null }.toMutableList()
@@ -35,6 +43,7 @@ internal object DownloadSubtitles {
                 (subtitle.url.startsWith("https://", true) || subtitle.url.startsWith("http://", true)) &&
                     saved.none { it.sourceUrl == subtitle.url }
             }
+        var failed = false
         for (batch in pending.chunked(4)) {
             val fetched = coroutineScope {
                 batch.map { subtitle ->
@@ -42,7 +51,7 @@ internal object DownloadSubtitles {
                         val body = try {
                             withTimeoutOrNull(15_000L) {
                                 httpGetTextWithHeaders(subtitle.url, subtitle.headers.orEmpty())
-                            }?.takeIf { it.isNotBlank() && PlayerSubtitleCueParser.parse(it, subtitle.url).isNotEmpty() }
+                            }?.takeIf { it.isNotBlank() && AutoSyncSubtitleCueParser.parse(it, subtitle.url).isNotEmpty() }
                         } catch (error: Exception) {
                             if (error is CancellationException) throw error
                             null
@@ -53,21 +62,36 @@ internal object DownloadSubtitles {
             }
             for ((subtitle, body) in fetched) {
                 currentCoroutineContext().ensureActive()
-                if (body == null) continue
-                val extension = PlayerSubtitleCueParser.fileExtension(body, subtitle.url)
+                if (body == null) { failed = true; continue }
+                val extension = when {
+                    body.contains("[Events]", true) -> "ass"
+                    body.trimStart().startsWith("WEBVTT") -> "vtt"
+                    else -> PlayerSubtitleCueParser.fileExtension(body, subtitle.url)
+                }
                 val fileName = "${nextFileIndex++}.$extension"
                 try {
                     storage.write(fileName, body)
                     saved += DownloadedSubtitle(subtitle.url, fileName, subtitle.language, subtitle.name)
+                    if (references.isNotEmpty()) {
+                        val cues = AutoSyncSubtitleCueParser.parse(body, subtitle.url)
+                        val match = AutoSyncConsensus.find(cues, references, consensus = true, segmented = false)
+                        val synced = match?.let { AutoSyncSubtitleTextRetimer.retime(body, it.timeline) }
+                        if (synced != null) {
+                            val syncedName = "${nextFileIndex++}.$extension"
+                            storage.write(syncedName, synced)
+                            saved += DownloadedSubtitle(subtitle.url, syncedName, subtitle.language, "${subtitle.name ?: subtitle.language} • مزامنة")
+                        }
+                    }
                     storage.write("manifest.json", json.encodeToString(SubtitleManifest(tracks = saved.toList())))
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
+                    failed = true
                 }
             }
         }
         currentCoroutineContext().ensureActive()
         runCatching {
-            storage.write("manifest.json", json.encodeToString(SubtitleManifest(complete = true, tracks = saved)))
+            storage.write("manifest.json", json.encodeToString(SubtitleManifest(complete = !failed, tracks = saved)))
         }
         Unit
     }

@@ -50,6 +50,19 @@ import org.jetbrains.compose.resources.getString
  * Uses its own state so it doesn't interfere with the main [StreamsRepository].
  */
 object PlayerStreamsRepository {
+    internal suspend fun streamsForDownload(type: String, videoId: String, season: Int?, episode: Int?): List<StreamItem> {
+        val state = MutableStateFlow(StreamsUiState())
+        var requestKey: String? = null
+        var requestJob: Job? = null
+        try {
+            fetchStreams(type, videoId, season, episode, false, state,
+                { requestKey }, { requestKey = it }, { requestJob }, { requestJob = it })
+            kotlinx.coroutines.withTimeoutOrNull(45_000L) { requestJob?.join() }
+            return state.value.groups.flatMap { it.streams }
+        } finally {
+            requestJob?.cancel()
+        }
+    }
     private val log = Logger.withTag("PlayerStreamsRepo")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

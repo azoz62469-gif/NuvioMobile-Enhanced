@@ -8,6 +8,7 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear { AppPrivacyLockCoordinator.shared.start() }
                 .preferredColorScheme(.dark)
                 .onOpenURL { url in
                     AppUrlBridgeKt.handleAppUrl(url: url.absoluteString)

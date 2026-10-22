@@ -26,6 +26,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -90,6 +91,7 @@ fun DownloadsScreen(
     }
 
     val tokens = MaterialTheme.nuvio
+    val seasonProgress by SeasonDownloadQueue.state.collectAsStateWithLifecycle()
 
     NuvioScreen {
         stickyHeader {
@@ -133,6 +135,18 @@ fun DownloadsScreen(
             )
         }
 
+        if (seasonProgress.total > 0) {
+            item {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("الموسم: ${seasonProgress.processed} من ${seasonProgress.total}")
+                    Text("أضيف للتنزيل: ${seasonProgress.queued} • موجود أو بلا رابط مدعوم: ${seasonProgress.skipped}")
+                    if (seasonProgress.running) {
+                        LinearProgressIndicator(progress = { seasonProgress.processed.toFloat() / seasonProgress.total.coerceAtLeast(1) }, modifier = Modifier.fillMaxWidth())
+                        TextButton(onClick = SeasonDownloadQueue::cancel) { Text("إيقاف إضافة الحلقات") }
+                    }
+                }
+            }
+        }
         if (selectedShowId == null) {
             downloadsRootContent(
                 uiState = uiState,

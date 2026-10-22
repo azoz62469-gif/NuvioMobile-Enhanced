@@ -24,6 +24,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -67,8 +68,12 @@ internal class IosAutoSyncPlayerController(
     private var candidates: List<AutoSyncSubtitleCandidate> = emptyList()
     private var appliedListener: ((subtitleUrl: String, delayMs: Int) -> Unit)? = null
     private var manualFallbackNoticeSourceUrl: String? = null
+    private var repeatJob: Job? = null
+    private var originalSubtitleUrl: String? = null
+    private var latestBody: String? = null
 
     init {
+        com.nuvio.app.features.downloads.DownloadPlaybackGuard.activePlayers.add(this)
         scope.launch {
             AutoSyncPreferencesRepository.preferredSubtitleAutoSyncOnStart.collect { enabled ->
                 if (!enabled) {
@@ -87,7 +92,12 @@ internal class IosAutoSyncPlayerController(
     }
 
     fun dispose() {
+        com.nuvio.app.features.downloads.DownloadPlaybackGuard.activePlayers.remove(this)
         cancel()
+        AutoSyncDiagnostics.restoreOriginal = null
+        AutoSyncDiagnostics.runAgain = null
+        AutoSyncDiagnostics.exportCurrent = null
+        AutoSyncDiagnostics.current.value = AutoSyncDiagnostic()
         appliedListener = null
         scope.cancel()
     }
@@ -111,6 +121,18 @@ internal class IosAutoSyncPlayerController(
         cancel()
         AutoSyncSyncedSubtitle.clear()
         delegate.setSubtitleUri(url)
+        SubtitleEnhancements.ensureLoaded()
+        val options = SubtitleEnhancements.state.value
+        val token = operationToken
+        val source = sourceUrl()
+        latestBody = null
+        AutoSyncDiagnostics.exportCurrent = null
+        AutoSyncDiagnostics.restoreOriginal = { cancel(); delegate.setSubtitleUri(url); delegate.setSubtitleDelayMs(0) }
+        AutoSyncDiagnostics.runAgain = { start(url, AutoSyncCandidateScope.SELECTED_ONLY) }
+        job = scope.launch {
+            val body = loadCandidateBody(url) ?: return@launch
+            attachEnhanced(body, options, token, source)
+        }
     }
 
     override fun selectSubtitleTrack(index: Int) {
@@ -141,6 +163,8 @@ internal class IosAutoSyncPlayerController(
 
     private fun cancel() {
         operationToken++
+        repeatJob?.cancel()
+        repeatJob = null
         job?.cancel()
         job = null
         bridge.cancelEmbeddedSubtitleReferenceLoad()
@@ -163,13 +187,33 @@ internal class IosAutoSyncPlayerController(
         AutoSyncSyncedSubtitle.clear()
         val token = operationToken
         AutoSyncPreferencesRepository.ensureLoaded()
+        SubtitleEnhancements.ensureLoaded()
+        val options = SubtitleEnhancements.state.value
         val currentSourceUrl = sourceUrl()
+        originalSubtitleUrl = url
+        latestBody = null
+        AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "جارٍ فحص الترجمة")
+        AutoSyncDiagnostics.restoreOriginal = {
+            cancel()
+            AutoSyncSyncedSubtitle.clear()
+            delegate.setSubtitleUri(url)
+            delegate.setSubtitleDelayMs(0)
+            AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "تمت استعادة الترجمة الأصلية")
+        }
+        AutoSyncDiagnostics.runAgain = { start(url, AutoSyncCandidateScope.SELECTED_ONLY) }
+        AutoSyncDiagnostics.exportCurrent = null
         // Keep useful subtitles visible while the embedded reference is inspected.
         attachOriginal(url)
         if (
             !AutoSyncPreferencesRepository.preferredSubtitleAutoSyncOnStart.value ||
             !supportsAutoSyncMediaSource(currentSourceUrl)
         ) {
+            job = scope.launch {
+                val body = loadCandidateBody(url) ?: return@launch
+                if (token != operationToken) return@launch
+                attachEnhanced(body, options, token, currentSourceUrl)
+                AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "المزامنة غير مفعلة")
+            }
             return
         }
         val currentSourceHeaders = sourceHeaders()
@@ -186,6 +230,9 @@ internal class IosAutoSyncPlayerController(
                         AutoSyncSubtitleCueParser.parse(body, url)
                     }
                 }.orEmpty()
+                if (selectedBody != null && token == operationToken) {
+                    attachEnhanced(selectedBody, options, token, currentSourceUrl)
+                }
                 val referenceLoad = referencesJob.await()
                 val references = referenceLoad.references
                 InAppLogger.info(
@@ -220,7 +267,7 @@ internal class IosAutoSyncPlayerController(
                 val selectedCandidate = candidates.firstOrNull { it.url == url }
                 var best = if (selectedCues.isNotEmpty()) {
                     withContext(Dispatchers.Default) {
-                        AutoSyncReferenceMatcher.findBest(selectedCues, references)
+                        AutoSyncConsensus.find(selectedCues, references, options.consensus, options.segmentedSync)
                     }
                 } else {
                     null
@@ -235,6 +282,7 @@ internal class IosAutoSyncPlayerController(
                         cues = cues,
                     )
                 }
+                val originalCandidate = bestCandidate
 
                 var addonReferenceCount = 0
                 if (best == null && selectedCandidate != null && selectedCues.isNotEmpty()) {
@@ -282,7 +330,8 @@ internal class IosAutoSyncPlayerController(
 
                 if (
                     references.isNotEmpty() &&
-                    candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH
+                    candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH &&
+                    options.chooseBestSubtitle
                 ) {
                     val aggressive = AutoSyncPreferencesRepository.aggressiveMode.value
                     if (best == null || aggressive || !isStrongMatch(best)) {
@@ -300,7 +349,7 @@ internal class IosAutoSyncPlayerController(
                         for (alternative in loadedAlternatives) {
                             val match = if (alternative.cues.isNotEmpty()) {
                                 withContext(Dispatchers.Default) {
-                                    AutoSyncReferenceMatcher.findBest(alternative.cues, references)
+                                    AutoSyncConsensus.find(alternative.cues, references, options.consensus, options.segmentedSync)
                                 }
                             } else {
                                 null
@@ -328,9 +377,10 @@ internal class IosAutoSyncPlayerController(
                         embeddedReferences = references,
                         selectedLanguage = selectedLanguage,
                     )
-                    if (asrMatch != null) {
+                    if (asrMatch != null && (best == null || asrMatch.score > best.score)) {
                         asrReferenceCount = asrMatch.reference.cues.size
                         best = asrMatch
+                        bestCandidate = originalCandidate
                     }
                 }
 
@@ -345,9 +395,10 @@ internal class IosAutoSyncPlayerController(
                         sourceUrl = currentSourceUrl,
                         headers = currentSourceHeaders,
                     )
-                    if (audioMatch != null) {
+                    if (audioMatch != null && (best == null || audioMatch.score > best.score)) {
                         audioReferenceCount = audioMatch.reference.cues.size
                         best = audioMatch
+                        bestCandidate = originalCandidate
                     }
                 }
 
@@ -385,7 +436,7 @@ internal class IosAutoSyncPlayerController(
 
                 val tolerance = AutoSyncPreferencesRepository.syncToleranceMs.value
                 val keepOriginalTiming = candidate.candidate.url == url &&
-                    tolerance > 0 &&
+                    tolerance > 0 && !options.dualSubtitles &&
                     match.timeline.maxAlignmentShiftMs() <= tolerance
                 if (keepOriginalTiming) {
                     if (
@@ -399,7 +450,7 @@ internal class IosAutoSyncPlayerController(
                     ) {
                         return@launch
                     }
-                    delegate.setSubtitleUri(url)
+                    attachEnhanced(candidate.body, options, token, currentSourceUrl)
                 } else {
                     val retimed = withContext(Dispatchers.Default) {
                         AutoSyncSubtitleTextRetimer.retime(candidate.body, match.timeline)
@@ -420,7 +471,33 @@ internal class IosAutoSyncPlayerController(
                         showManualFallback(token, currentSourceUrl)
                         return@launch
                     }
-                    val subtitlePath = writeRetimedSubtitle(retimed)
+                    var output = retimed
+                    if (options.dualSubtitles) {
+                        val secondary = candidates.firstOrNull {
+                            it.url != candidate.candidate.url &&
+                                SubtitleLanguageMatching.matchesLanguageCode(it.language, options.secondaryLanguage)
+                        }?.let { loadCandidate(it) }
+                        if (secondary != null) {
+                            val primaryCues = AutoSyncSubtitleCueParser.parse(retimed, candidate.candidate.url)
+                            val secondaryMatch = withContext(Dispatchers.Default) {
+                                AutoSyncReferenceMatcher.findBest(secondary.cues, listOf(
+                                    AutoSyncReferenceTimeline("primary", candidate.candidate.language, null, primaryCues),
+                                ))
+                            }
+                            if (secondaryMatch != null) {
+                                val secondaryBody = AutoSyncSubtitleTextRetimer.retime(secondary.body, secondaryMatch.timeline)
+                                if (secondaryBody != null) output = SubtitleTextEnhancer.export(
+                                    SubtitleDualComposer.combine(primaryCues, AutoSyncSubtitleCueParser.parse(secondaryBody, secondary.candidate.url)), "srt",
+                                )
+                            }
+                        }
+                    }
+                    output = withContext(Dispatchers.Default) { SubtitleTextEnhancer.process(output, options) }
+                    currentCoroutineContext().ensureActive()
+                    if (token != operationToken || sourceUrl() != currentSourceUrl) return@launch
+                    val subtitlePath = writeRetimedSubtitle(output)
+                    latestBody = output
+                    AutoSyncDiagnostics.exportCurrent = { latestBody?.let { SubtitleExportIos.export(it) } }
                     currentCoroutineContext().ensureActive()
                     if (
                         !canApplyAutoSyncResult(
@@ -456,6 +533,28 @@ internal class IosAutoSyncPlayerController(
                 delegate.setSubtitleDelayMs(0)
                 AutoSyncSyncedSubtitle.mark(candidate.candidate.url)
                 appliedListener?.invoke(candidate.candidate.url, 0)
+                AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(
+                    state = "تمت المزامنة",
+                    method = when {
+                        match.reference.key.startsWith("asr:") -> "مطابقة كلمات الصوت"
+                        match.reference.key.startsWith("audio:") -> "تحليل نشاط الصوت"
+                        match.timeline.alignmentSource == "piecewise-text" -> "مطابقة المقاطع"
+                        else -> "مطابقة ترجمة مرجعية"
+                    },
+                    score = match.score.coerceIn(0.0, 1.0),
+                    offsetMs = match.timeline.alignmentInterceptMs.toLong(),
+                    scale = match.timeline.alignmentScale,
+                    coverage = match.timeline.targetCoverage,
+                    references = references.size + addonReferenceCount,
+                )
+                if (options.keepHistory) SubtitleExportIos.record(currentSourceUrl, candidate.candidate.url, AutoSyncDiagnostics.current.value)
+                if (options.exportSynced) latestBody?.let { SubtitleExportIos.save(it) }
+                if (options.repeatSync) repeatJob = scope.launch {
+                    delay(10 * 60 * 1000L)
+                    SubtitleEnhancements.ensureLoaded()
+                    if (token == operationToken && sourceUrl() == currentSourceUrl &&
+                        SubtitleEnhancements.state.value.repeatSync && bridge.getIsPlaying()) start(url, candidateScope)
+                }
             } catch (cancel: CancellationException) {
                 throw cancel
             } catch (_: Exception) {
@@ -509,6 +608,7 @@ internal class IosAutoSyncPlayerController(
                 }
             }.awaitAll().filterNotNull()
         }
+        val matches = mutableListOf<AutoSyncReferenceMatch>()
         for ((ranked, timeline) in loaded) {
             if (timeline.cues.isEmpty()) continue
             val match = withContext(Dispatchers.Default) {
@@ -532,9 +632,9 @@ internal class IosAutoSyncPlayerController(
                     "sameAddon=${ranked.sameAddon} " +
                     "evidence=${ranked.versionEvidence.joinToString("+")}",
             )
-            return match
+            matches += match
         }
-        return null
+        return if (SubtitleEnhancements.state.value.consensus) AutoSyncConsensus.choose(matches) else matches.maxByOrNull { it.score }
     }
 
     /**
@@ -562,7 +662,9 @@ internal class IosAutoSyncPlayerController(
         }
         val addonCandidates = candidates
             .asSequence()
-            .filter { it.url.isNotBlank() && isEnglishLanguage(it.language) }
+            .filter { it.url.isNotBlank() && SubtitleLanguageMatching.matchesLanguageCode(
+                it.language, SubtitleEnhancements.state.value.speechLocale.substringBefore('-'),
+            ) }
             .distinctBy { it.url }
             .take(MAX_ASR_ADDON_REFERENCES)
             .toList()
@@ -590,6 +692,12 @@ internal class IosAutoSyncPlayerController(
             bridge.recognizeAudioWords(
                 sourceUrl = sourceUrl,
                 headersJson = encodeHeaders(headers),
+                locale = SubtitleEnhancements.state.value.speechLocale,
+                onDeviceOnly = SubtitleEnhancements.state.value.onDeviceOnly,
+                analysisMinutes = SubtitleEnhancements.state.value.analysisMinutes,
+                sampleStartMs = if (SubtitleEnhancements.state.value.repeatSync) {
+                    (bridge.getPositionMs() - 30_000L).coerceAtLeast(0)
+                } else 0L,
             ) { json ->
                 if (continuation.isActive) {
                     continuation.resume(decodeAudioWordPayload(json))
@@ -849,6 +957,7 @@ internal class IosAutoSyncPlayerController(
     }
 
     private suspend fun showManualFallback(token: Long, sourceUrl: String) {
+        if (token == operationToken) AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "لم تثبت المطابقة؛ التوقيت الأصلي مستمر")
         if (
             !shouldShowManualFallbackNotice(
                 capturedToken = token,
@@ -867,6 +976,16 @@ internal class IosAutoSyncPlayerController(
         val sanitized = sanitizePlaybackHeaders(headers)
         if (sanitized.isEmpty()) return null
         return runCatching { Json.encodeToString(sanitized) }.getOrNull()
+    }
+
+    private suspend fun attachEnhanced(body: String, options: SubtitleEnhancementOptions, token: Long, source: String) {
+        val processed = withContext(Dispatchers.Default) { SubtitleTextEnhancer.process(body, options) }
+        if (token != operationToken || sourceUrl() != source) return
+        latestBody = processed
+        AutoSyncDiagnostics.exportCurrent = { latestBody?.let { SubtitleExportIos.export(it) } }
+        if (processed != body) writeRetimedSubtitle(processed)?.let {
+            delegate.setSubtitleUri(NSURL.fileURLWithPath(it).absoluteString ?: it)
+        }
     }
 
     private fun isStrongMatch(match: AutoSyncReferenceMatch): Boolean =

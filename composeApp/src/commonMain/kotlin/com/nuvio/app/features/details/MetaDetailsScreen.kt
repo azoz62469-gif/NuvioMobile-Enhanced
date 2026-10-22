@@ -1616,10 +1616,14 @@ fun MetaDetailsScreen(
                             }
                             val canRateSeason = rememberCanRate(seasonRatingTarget)
                             val seasonUserRating = rememberUserRating(seasonRatingTarget)
+                            val seasonDownloadsEnabled by DownloadsSettingsRepository.seasonDownloads.collectAsStateWithLifecycle()
                             SeasonWatchedActionSheet(
                                 seasonLabel = seasonLabel,
                                 isSeasonWatched = isSeasonWatched,
                                 canMarkPreviousSeasons = canMarkPreviousSeasons,
+                                onDownloadSeason = if (seasonDownloadsEnabled && seasonEpisodes.isNotEmpty()) {
+                                    { com.nuvio.app.features.downloads.SeasonDownloadQueue.start(meta, seasonEpisodes) }
+                                } else null,
                                 onDismiss = { selectedSeasonForActions = null },
                                 onToggleSeasonWatched = {
                                     WatchingActions.toggleSeasonWatched(

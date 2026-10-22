@@ -261,6 +261,10 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
     func recognizeAudioWords(
         sourceUrl: String,
         headersJson: String?,
+        locale: String,
+        onDeviceOnly: Bool,
+        analysisMinutes: Int32,
+        sampleStartMs: Int64,
         completion: @escaping (String) -> Void
     ) {
         audioWordGeneration += 1
@@ -268,7 +272,11 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
         audioWordRecognizer?.cancel()
         let recognizer = FFmpegAudioSpeechRecognizer(
             url: sourceUrl,
-            headers: parseRequestHeaders(headersJson)
+            headers: parseRequestHeaders(headersJson),
+            locale: locale,
+            onDeviceOnly: onDeviceOnly,
+            analysisMinutes: Int(analysisMinutes),
+            sampleStartMs: sampleStartMs
         )
         audioWordRecognizer = recognizer
         DispatchQueue.global(qos: .utility).async {
