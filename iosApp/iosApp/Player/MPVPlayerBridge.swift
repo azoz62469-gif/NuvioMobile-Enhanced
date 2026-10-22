@@ -17,6 +17,8 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
     private var subtitleReferenceLoader: FFmpegEmbeddedSubtitleReferenceLoader?
     private var audioSpeechGeneration = 0
     private var audioSpeechLoader: FFmpegAudioSpeechReferenceLoader?
+    private var audioWordGeneration = 0
+    private var audioWordRecognizer: FFmpegAudioSpeechRecognizer?
 
     func createPlayerViewController() -> UIViewController {
         return ensurePlayerViewController()
@@ -254,6 +256,35 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
         audioSpeechGeneration += 1
         audioSpeechLoader?.cancel()
         audioSpeechLoader = nil
+    }
+
+    func recognizeAudioWords(
+        sourceUrl: String,
+        headersJson: String?,
+        completion: @escaping (String) -> Void
+    ) {
+        audioWordGeneration += 1
+        let generation = audioWordGeneration
+        audioWordRecognizer?.cancel()
+        let recognizer = FFmpegAudioSpeechRecognizer(
+            url: sourceUrl,
+            headers: parseRequestHeaders(headersJson)
+        )
+        audioWordRecognizer = recognizer
+        DispatchQueue.global(qos: .utility).async {
+            let json = recognizer.load()
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.audioWordGeneration == generation else { return }
+                self.audioWordRecognizer = nil
+                completion(json)
+            }
+        }
+    }
+
+    func cancelAudioWordRecognition() {
+        audioWordGeneration += 1
+        audioWordRecognizer?.cancel()
+        audioWordRecognizer = nil
     }
 
     func clearExternalSubtitle() { playerVC?.removeExternalSubtitles() }

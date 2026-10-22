@@ -91,6 +91,16 @@ interface NuvioPlayerBridge {
         completion: (String) -> Unit,
     )
     fun cancelAudioSpeechReferenceAnalysis()
+    /**
+     * Returns timestamped words recognized from a bounded prefix of the selected audio stream.
+     * On-device recognition is preferred; failure is reported as JSON and never stops playback.
+     */
+    fun recognizeAudioWords(
+        sourceUrl: String,
+        headersJson: String?,
+        completion: (String) -> Unit,
+    )
+    fun cancelAudioWordRecognition()
     fun clearExternalSubtitle()
     fun clearExternalSubtitleAndSelect(trackId: Int)
     fun setSubtitleDelayMs(delayMs: Int)

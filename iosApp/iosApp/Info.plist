@@ -51,6 +51,8 @@
 	<string>Use biometric authentication to unlock your primary Nuvio profile.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Nuvio connects to media servers on your local network.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Nuvio uses speech recognition to align subtitle timing with the playing video.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
