@@ -12,7 +12,6 @@ internal data class SubtitleEnhancementOptions(
     val consensus: Boolean = false,
     val segmentedSync: Boolean = false,
     val chooseBestSubtitle: Boolean = false,
-    val repeatSync: Boolean = false,
     val showDiagnostics: Boolean = false,
     val keepHistory: Boolean = false,
     val exportSynced: Boolean = false,
@@ -82,6 +81,8 @@ internal object SubtitleEnhancements {
 
 internal data class AutoSyncDiagnostic(
     val state: String = "جاهز",
+    val progressPercent: Int = 0,
+    val outcome: AutoSyncOutcome = AutoSyncOutcome.IDLE,
     val method: String = "",
     val score: Double? = null,
     val offsetMs: Long = 0,
@@ -89,6 +90,14 @@ internal data class AutoSyncDiagnostic(
     val coverage: Double = 0.0,
     val references: Int = 0,
 )
+
+internal enum class AutoSyncOutcome {
+    IDLE,
+    RUNNING,
+    SUCCESS,
+    FAILURE,
+    DISABLED,
+}
 
 internal object AutoSyncDiagnostics {
     val current = MutableStateFlow(AutoSyncDiagnostic())

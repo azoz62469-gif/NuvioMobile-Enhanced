@@ -43,7 +43,6 @@ internal fun SubtitleEnhancementSettingsRow(isTablet: Boolean) {
                     Toggle("مقارنة المراجع والتصويت", options.consensus) { options.copy(consensus = it) }
                     Toggle("مطابقة المقاطع بشكل مستقل", options.segmentedSync) { options.copy(segmentedSync = it) }
                     Toggle("اختيار أفضل ترجمة تلقائياً", options.chooseBestSubtitle) { options.copy(chooseBestSubtitle = it) }
-                    Toggle("إعادة الفحص كل عشر دقائق", options.repeatSync) { options.copy(repeatSync = it) }
                     Toggle("حفظ سجل المزامنة محلياً", options.keepHistory) { options.copy(keepHistory = it) }
                     Toggle("حفظ نسخة مصححة في الملفات", options.exportSynced) { options.copy(exportSynced = it) }
                     Toggle("مزامنة ترجمة التنزيلات عند توفر مرجع", options.offlineSync) { options.copy(offlineSync = it) }

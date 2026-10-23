@@ -24,7 +24,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -32,7 +31,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import nuvio.composeapp.generated.resources.Res
-import nuvio.composeapp.generated.resources.autosync_toast_manual_fallback
 import nuvio.composeapp.generated.resources.autosync_toast_audio_fallback
 import org.jetbrains.compose.resources.getString
 import platform.Foundation.NSFileManager
@@ -68,7 +66,6 @@ internal class IosAutoSyncPlayerController(
     private var candidates: List<AutoSyncSubtitleCandidate> = emptyList()
     private var appliedListener: ((subtitleUrl: String, delayMs: Int) -> Unit)? = null
     private var manualFallbackNoticeSourceUrl: String? = null
-    private var repeatJob: Job? = null
     private var originalSubtitleUrl: String? = null
     private var latestBody: String? = null
 
@@ -163,8 +160,6 @@ internal class IosAutoSyncPlayerController(
 
     private fun cancel() {
         operationToken++
-        repeatJob?.cancel()
-        repeatJob = null
         job?.cancel()
         job = null
         bridge.cancelEmbeddedSubtitleReferenceLoad()
@@ -192,13 +187,21 @@ internal class IosAutoSyncPlayerController(
         val currentSourceUrl = sourceUrl()
         originalSubtitleUrl = url
         latestBody = null
-        AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "جارٍ فحص الترجمة")
+        AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(
+            state = "بدأ فحص الترجمة والمزامنة",
+            progressPercent = 0,
+            outcome = AutoSyncOutcome.RUNNING,
+        )
         AutoSyncDiagnostics.restoreOriginal = {
             cancel()
             AutoSyncSyncedSubtitle.clear()
             delegate.setSubtitleUri(url)
             delegate.setSubtitleDelayMs(0)
-            AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "تمت استعادة الترجمة الأصلية")
+            AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(
+                state = "تمت استعادة الترجمة الأصلية",
+                progressPercent = 100,
+                outcome = AutoSyncOutcome.SUCCESS,
+            )
         }
         AutoSyncDiagnostics.runAgain = { start(url, AutoSyncCandidateScope.SELECTED_ONLY) }
         AutoSyncDiagnostics.exportCurrent = null
@@ -209,10 +212,18 @@ internal class IosAutoSyncPlayerController(
             !supportsAutoSyncMediaSource(currentSourceUrl)
         ) {
             job = scope.launch {
-                val body = loadCandidateBody(url) ?: return@launch
+                val body = loadCandidateBody(url)
+                if (body == null) {
+                    finishFailure(token, "تعذر تحميل ملف الترجمة")
+                    return@launch
+                }
                 if (token != operationToken) return@launch
                 attachEnhanced(body, options, token, currentSourceUrl)
-                AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "المزامنة غير مفعلة")
+                AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(
+                    state = "تم اختيار الترجمة؛ المزامنة التلقائية غير مفعلة",
+                    progressPercent = 100,
+                    outcome = AutoSyncOutcome.DISABLED,
+                )
             }
             return
         }
@@ -230,11 +241,13 @@ internal class IosAutoSyncPlayerController(
                         AutoSyncSubtitleCueParser.parse(body, url)
                     }
                 }.orEmpty()
+                updateProgress(token, 20, "تم تحميل الترجمة؛ جارٍ قراءة توقيت الحلقة")
                 if (selectedBody != null && token == operationToken) {
                     attachEnhanced(selectedBody, options, token, currentSourceUrl)
                 }
                 val referenceLoad = referencesJob.await()
                 val references = referenceLoad.references
+                updateProgress(token, 40, "تم فحص مراجع الحلقة؛ جارٍ مطابقة التوقيت", references.size)
                 InAppLogger.info(
                     "AutoSync/iOS",
                     "references=${references.size} " +
@@ -314,6 +327,7 @@ internal class IosAutoSyncPlayerController(
                             rankedReferences = rankedReferences,
                         )
                     ) {
+                        updateProgress(token, 55, "جارٍ مقارنة مصادر الترجمة")
                         addonReferenceCount = rankedReferences.size
                         best = findAddonReferenceMatch(
                             target = selectedCues,
@@ -333,6 +347,7 @@ internal class IosAutoSyncPlayerController(
                     candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH &&
                     options.chooseBestSubtitle
                 ) {
+                    updateProgress(token, 60, "جارٍ اختيار أفضل ترجمة عربية")
                     val aggressive = AutoSyncPreferencesRepository.aggressiveMode.value
                     if (best == null || aggressive || !isStrongMatch(best)) {
                         val alternatives = sameLanguageAlternativesFor(url, selectedLanguage)
@@ -369,6 +384,7 @@ internal class IosAutoSyncPlayerController(
                     selectedCues.isNotEmpty() &&
                     (best == null || !isStrongMatch(best))
                 ) {
+                    updateProgress(token, 70, "جارٍ تحليل كلمات الصوت")
                     NuvioToastController.show(getString(Res.string.autosync_toast_audio_fallback))
                     val asrMatch = findAudioWordMatch(
                         target = selectedCues,
@@ -390,6 +406,7 @@ internal class IosAutoSyncPlayerController(
                     selectedCues.isNotEmpty() &&
                     (best == null || !isStrongMatch(best))
                 ) {
+                    updateProgress(token, 85, "جارٍ التحقق من نشاط الصوت")
                     val audioMatch = findAudioSpeechMatch(
                         target = selectedCues,
                         sourceUrl = currentSourceUrl,
@@ -434,6 +451,7 @@ internal class IosAutoSyncPlayerController(
                     return@launch
                 }
 
+                updateProgress(token, 92, "تم العثور على مطابقة؛ جارٍ تطبيق التوقيت")
                 val tolerance = AutoSyncPreferencesRepository.syncToleranceMs.value
                 val keepOriginalTiming = candidate.candidate.url == url &&
                     tolerance > 0 && !options.dualSubtitles &&
@@ -534,7 +552,9 @@ internal class IosAutoSyncPlayerController(
                 AutoSyncSyncedSubtitle.mark(candidate.candidate.url)
                 appliedListener?.invoke(candidate.candidate.url, 0)
                 AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(
-                    state = "تمت المزامنة",
+                    state = "تمت المزامنة بنجاح",
+                    progressPercent = 100,
+                    outcome = AutoSyncOutcome.SUCCESS,
                     method = when {
                         match.reference.key.startsWith("asr:") -> "مطابقة كلمات الصوت"
                         match.reference.key.startsWith("audio:") -> "تحليل نشاط الصوت"
@@ -549,12 +569,7 @@ internal class IosAutoSyncPlayerController(
                 )
                 if (options.keepHistory) SubtitleExportIos.record(currentSourceUrl, candidate.candidate.url, AutoSyncDiagnostics.current.value)
                 if (options.exportSynced) latestBody?.let { SubtitleExportIos.save(it) }
-                if (options.repeatSync) repeatJob = scope.launch {
-                    delay(10 * 60 * 1000L)
-                    SubtitleEnhancements.ensureLoaded()
-                    if (token == operationToken && sourceUrl() == currentSourceUrl &&
-                        SubtitleEnhancements.state.value.repeatSync && bridge.getIsPlaying()) start(url, candidateScope)
-                }
+                NuvioToastController.show("تمت مزامنة الترجمة بنجاح", durationMillis = 4_000L)
             } catch (cancel: CancellationException) {
                 throw cancel
             } catch (_: Exception) {
@@ -695,9 +710,7 @@ internal class IosAutoSyncPlayerController(
                 locale = SubtitleEnhancements.state.value.speechLocale,
                 onDeviceOnly = SubtitleEnhancements.state.value.onDeviceOnly,
                 analysisMinutes = SubtitleEnhancements.state.value.analysisMinutes,
-                sampleStartMs = if (SubtitleEnhancements.state.value.repeatSync) {
-                    (bridge.getPositionMs() - 30_000L).coerceAtLeast(0)
-                } else 0L,
+                sampleStartMs = 0L,
             ) { json ->
                 if (continuation.isActive) {
                     continuation.resume(decodeAudioWordPayload(json))
@@ -957,7 +970,7 @@ internal class IosAutoSyncPlayerController(
     }
 
     private suspend fun showManualFallback(token: Long, sourceUrl: String) {
-        if (token == operationToken) AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(state = "لم تثبت المطابقة؛ التوقيت الأصلي مستمر")
+        if (token == operationToken) finishFailure(token, "فشلت المزامنة؛ التوقيت الأصلي مستمر")
         if (
             !shouldShowManualFallbackNotice(
                 capturedToken = token,
@@ -969,7 +982,32 @@ internal class IosAutoSyncPlayerController(
             return
         }
         manualFallbackNoticeSourceUrl = sourceUrl
-        NuvioToastController.show(getString(Res.string.autosync_toast_manual_fallback))
+        NuvioToastController.show("فشلت المزامنة؛ الترجمة الأصلية ما زالت تعمل", durationMillis = 5_000L)
+    }
+
+    private fun updateProgress(
+        token: Long,
+        percent: Int,
+        state: String,
+        references: Int? = null,
+    ) {
+        if (token != operationToken) return
+        val current = AutoSyncDiagnostics.current.value
+        AutoSyncDiagnostics.current.value = current.copy(
+            state = state,
+            progressPercent = maxOf(current.progressPercent, percent.coerceIn(0, 99)),
+            outcome = AutoSyncOutcome.RUNNING,
+            references = references ?: current.references,
+        )
+    }
+
+    private fun finishFailure(token: Long, state: String) {
+        if (token != operationToken) return
+        AutoSyncDiagnostics.current.value = AutoSyncDiagnostic(
+            state = state,
+            progressPercent = 100,
+            outcome = AutoSyncOutcome.FAILURE,
+        )
     }
 
     private fun encodeHeaders(headers: Map<String, String>): String? {

@@ -39,13 +39,16 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +76,7 @@ import com.nuvio.app.core.build.AppFeaturePolicy
 import com.nuvio.app.core.format.formatReleaseDateForDisplay
 import com.nuvio.app.core.i18n.localizedSeasonEpisodeCode
 import com.nuvio.app.core.ui.NuvioAnimatedWatchedBadge
+import com.nuvio.app.core.ui.NuvioToastController
 import com.nuvio.app.core.ui.NuvioCardDepthSurface
 import com.nuvio.app.core.ui.NuvioProgressBar
 import com.nuvio.app.core.ui.nuvio
@@ -92,6 +96,7 @@ import com.nuvio.app.features.details.formatRuntimeFromMinutes
 import com.nuvio.app.features.details.groupedEpisodesForDisplay
 import com.nuvio.app.features.details.preferredEpisodeNumberForSeason
 import com.nuvio.app.features.details.seasonSortKey
+import com.nuvio.app.features.downloads.SeasonDownloadQueue
 import com.nuvio.app.features.watchprogress.WatchProgressEntry
 import com.nuvio.app.features.watchprogress.buildPlaybackVideoId
 import com.nuvio.app.features.watching.application.WatchingState
@@ -185,6 +190,7 @@ fun DetailSeriesContent(
     val currentSeason = selectedSeasonOverride
         ?.takeIf { it in groupedEpisodes }
         ?: defaultSeason
+    val seasonDownloadProgress by SeasonDownloadQueue.state.collectAsState()
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val sizing = seriesContentSizing(maxWidth.value)
@@ -203,6 +209,29 @@ fun DetailSeriesContent(
                 onSelect = { selectedSeasonOverride = it },
                 onLongPress = onSeasonLongPress,
             )
+
+            val downloadableEpisodes = groupedEpisodes[currentSeason].orEmpty().filter { it.available }
+            OutlinedButton(
+                onClick = {
+                    SeasonDownloadQueue.start(meta, downloadableEpisodes)
+                    NuvioToastController.show("بدأ تجهيز تنزيل الموسم واختيار أول مصدر متاح")
+                },
+                enabled = downloadableEpisodes.isNotEmpty() && !seasonDownloadProgress.running,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalScrollPadding),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Icon(Icons.Rounded.Download, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    if (seasonDownloadProgress.running) {
+                        "جاري تجهيز الحلقات ${seasonDownloadProgress.processed}/${seasonDownloadProgress.total}"
+                    } else {
+                        "تنزيل الموسم كامل (${downloadableEpisodes.size} حلقة)"
+                    },
+                )
+            }
 
             AnimatedContent(
                 targetState = currentSeason,

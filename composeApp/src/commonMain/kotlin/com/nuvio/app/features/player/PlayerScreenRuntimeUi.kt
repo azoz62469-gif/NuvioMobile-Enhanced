@@ -358,6 +358,11 @@ internal fun PlayerScreenRuntime.RenderPlayerRuntimeUi() {
             p2pRebufferMessage = p2pRebufferMessage,
             p2pRebufferProgress = p2pRebufferProgress,
         )
+        AutoSyncStatusOverlay(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 16.dp, start = horizontalSafePadding, end = horizontalSafePadding),
+        )
         SubtitleSyncByEarCard(
             visible = showSubtitleSyncByEar,
             subtitleDelayMs = subtitleDelayMs,

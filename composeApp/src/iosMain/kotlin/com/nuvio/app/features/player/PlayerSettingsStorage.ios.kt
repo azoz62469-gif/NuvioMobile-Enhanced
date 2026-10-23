@@ -40,6 +40,7 @@ actual object PlayerSettingsStorage {
     private const val preferredAudioLanguageKey = "preferred_audio_language"
     private const val secondaryPreferredAudioLanguageKey = "secondary_preferred_audio_language"
     private const val preferredSubtitleLanguageKey = "preferred_subtitle_language"
+    private const val arabicSubtitleDefaultMigrationKey = "preferred_subtitle_arabic_default_070"
     private const val secondaryPreferredSubtitleLanguageKey = "secondary_preferred_subtitle_language"
     private const val subtitleTextColorKey = "subtitle_text_color"
     private const val subtitleBackgroundColorKey = "subtitle_background_color"
@@ -445,6 +446,11 @@ actual object PlayerSettingsStorage {
     actual fun loadPreferredSubtitleLanguage(): String? {
         val defaults = NSUserDefaults.standardUserDefaults
         val key = ProfileScopedKey.of(preferredSubtitleLanguageKey)
+        val migrationKey = ProfileScopedKey.of(arabicSubtitleDefaultMigrationKey)
+        if (!defaults.boolForKey(migrationKey)) {
+            defaults.setObject("ar", forKey = key)
+            defaults.setBool(true, forKey = migrationKey)
+        }
         return defaults.stringForKey(key)
     }
 

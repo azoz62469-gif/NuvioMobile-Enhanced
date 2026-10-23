@@ -15,7 +15,11 @@ internal fun AutoSyncDiagnosticsPanel() {
     if (!options.showDiagnostics) return
     val status by AutoSyncDiagnostics.current.collectAsState()
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("المزامنة: ${status.state}")
+        Text("المزامنة: ${status.state} (${status.progressPercent}٪)")
+        LinearProgressIndicator(
+            progress = { status.progressPercent.coerceIn(0, 100) / 100f },
+            modifier = Modifier.fillMaxWidth(),
+        )
         if (status.method.isNotBlank()) Text(status.method)
         status.score?.let {
             Text("درجة المطابقة: ${(it * 100).roundToInt()}٪ • التغطية: ${(status.coverage * 100).roundToInt()}٪")

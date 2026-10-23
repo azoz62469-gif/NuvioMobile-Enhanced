@@ -21,6 +21,7 @@ actual object ThemeSettingsStorage {
     private const val showCatalogAccentEnabledKey = "show_catalog_accent_enabled"
     private const val tabBarBehaviorKey = "tab_bar_behavior"
     private const val selectedAppLanguageKey = "selected_app_language"
+    private const val arabicAppLanguageMigrationKey = "app_language_arabic_default_070"
     private const val navBarStyleKey = "nav_bar_style"
     private const val navBarPositionKey = "nav_bar_position"
 
@@ -197,9 +198,14 @@ actual object ThemeSettingsStorage {
     }
 
     actual fun loadSelectedAppLanguage(): String? {
-        val value = NSUserDefaults.standardUserDefaults.stringForKey(selectedAppLanguageKey)
+        val defaults = NSUserDefaults.standardUserDefaults
+        if (!defaults.boolForKey(arabicAppLanguageMigrationKey)) {
+            defaults.setObject(AppLanguage.ARABIC.code, forKey = selectedAppLanguageKey)
+            defaults.setBool(true, forKey = arabicAppLanguageMigrationKey)
+        }
+        val value = defaults.stringForKey(selectedAppLanguageKey)
         if (value != null) return value
-        val legacy = NSUserDefaults.standardUserDefaults.stringForKey(ProfileScopedKey.of(selectedAppLanguageKey))
+        val legacy = defaults.stringForKey(ProfileScopedKey.of(selectedAppLanguageKey))
         if (legacy != null) saveSelectedAppLanguage(legacy)
         return legacy
     }

@@ -38,15 +38,16 @@ internal fun PlayerOverlayScaffold(
     ) {
         val interactionSource = remember { MutableInteractionSource() }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onDismiss,
-                ),
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onDismiss,
+                    ),
+            )
             Box(
                 modifier = Modifier
                     .fillMaxSize()

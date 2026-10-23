@@ -1,5 +1,6 @@
 package com.nuvio.app.features.downloads
 
+import com.nuvio.app.core.ui.NuvioToastController
 import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.details.MetaVideo
 import com.nuvio.app.features.player.PlayerStreamsRepository
@@ -22,6 +23,7 @@ internal object SeasonDownloadQueue {
         val selected = episodes.filter { it.available }.distinctBy { it.id }.sortedWith(compareBy({ it.season }, { it.episode }))
         state.value = SeasonDownloadProgress(running = true, total = selected.size)
         job = scope.launch {
+            var completedNaturally = false
             try {
                 DownloadsRepository.ensureLoaded()
                 for (episode in selected) {
@@ -34,9 +36,11 @@ internal object SeasonDownloadQueue {
                     val existing = DownloadsRepository.uiState.value.items.any {
                         it.parentMetaId == meta.id && it.seasonNumber == episode.season && it.episodeNumber == episode.episode
                     }
-                    val stream = if (existing) null else PlayerStreamsRepository.streamsForDownload(
-                        meta.type, episode.id, episode.season, episode.episode,
-                    ).firstOrNull { it.playableDirectUrl?.isSupportedDownloadUrl() == true }
+                    val stream = if (existing) null else runCatching {
+                        PlayerStreamsRepository.streamsForDownload(
+                            meta.type, episode.id, episode.season, episode.episode,
+                        ).firstOrNull { it.playableDirectUrl?.isSupportedDownloadUrl() == true }
+                    }.getOrNull()
                     ensureActive()
                     if (ProfileRepository.activeProfileId != profile) break
                     val result = stream?.let {
@@ -52,7 +56,17 @@ internal object SeasonDownloadQueue {
                         queued = state.value.queued + if (queued) 1 else 0,
                         skipped = state.value.skipped + if (queued) 0 else 1)
                 }
-            } finally { state.value = state.value.copy(running = false) }
+                completedNaturally = true
+            } finally {
+                state.value = state.value.copy(running = false)
+                if (completedNaturally) {
+                    NuvioToastController.show(
+                        "تمت إضافة ${state.value.queued} حلقة للتنزيل" +
+                            if (state.value.skipped > 0) "، وتعذر أو تكرر ${state.value.skipped}" else "",
+                        durationMillis = 5_000L,
+                    )
+                }
+            }
         }
     }
 }
