@@ -569,15 +569,18 @@ internal fun LazyListScope.detailEpisodeListItems(
 
     item(key = "detail-episodes-header") {
         EpisodeSectionContainer(horizontalPadding, contentMaxWidth, bottom = 16.dp) {
-            DetailSeriesListHeader(
-                meta = meta,
-                groupedEpisodes = grouped,
-                seasons = seasons,
-                currentSeason = season,
-                horizontalScrollPadding = horizontalPadding,
-                onSeasonSelect = navigator::selectSeason,
-                onSeasonLongPress = onSeasonLongPress,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                DetailSeriesListHeader(
+                    meta = meta,
+                    groupedEpisodes = grouped,
+                    seasons = seasons,
+                    currentSeason = season,
+                    horizontalScrollPadding = horizontalPadding,
+                    onSeasonSelect = navigator::selectSeason,
+                    onSeasonLongPress = onSeasonLongPress,
+                )
+                SeasonDownloadButton(meta = meta, episodes = seasonEpisodes)
+            }
         }
     }
     emitted += 1

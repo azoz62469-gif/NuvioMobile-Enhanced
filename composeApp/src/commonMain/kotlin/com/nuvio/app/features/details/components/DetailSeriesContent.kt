@@ -190,7 +190,6 @@ fun DetailSeriesContent(
     val currentSeason = selectedSeasonOverride
         ?.takeIf { it in groupedEpisodes }
         ?: defaultSeason
-    val seasonDownloadProgress by SeasonDownloadQueue.state.collectAsState()
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val sizing = seriesContentSizing(maxWidth.value)
@@ -210,28 +209,11 @@ fun DetailSeriesContent(
                 onLongPress = onSeasonLongPress,
             )
 
-            val downloadableEpisodes = groupedEpisodes[currentSeason].orEmpty().filter { it.available }
-            OutlinedButton(
-                onClick = {
-                    SeasonDownloadQueue.start(meta, downloadableEpisodes)
-                    NuvioToastController.show("بدأ تجهيز تنزيل الموسم واختيار أول مصدر متاح")
-                },
-                enabled = downloadableEpisodes.isNotEmpty() && !seasonDownloadProgress.running,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = horizontalScrollPadding),
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Icon(Icons.Rounded.Download, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    if (seasonDownloadProgress.running) {
-                        "جاري تجهيز الحلقات ${seasonDownloadProgress.processed}/${seasonDownloadProgress.total}"
-                    } else {
-                        "تنزيل الموسم كامل (${downloadableEpisodes.size} حلقة)"
-                    },
-                )
-            }
+            SeasonDownloadButton(
+                meta = meta,
+                episodes = groupedEpisodes[currentSeason].orEmpty(),
+                horizontalPadding = horizontalScrollPadding,
+            )
 
             AnimatedContent(
                 targetState = currentSeason,
@@ -400,6 +382,37 @@ fun DetailSeriesContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun SeasonDownloadButton(
+    meta: MetaDetails,
+    episodes: List<MetaVideo>,
+    horizontalPadding: Dp = 0.dp,
+) {
+    val progress by SeasonDownloadQueue.state.collectAsState()
+    val downloadableEpisodes = episodes.filter { it.available }
+    OutlinedButton(
+        onClick = {
+            SeasonDownloadQueue.start(meta, downloadableEpisodes)
+            NuvioToastController.show("بدأ تجهيز تنزيل الموسم واختيار أول مصدر متاح")
+        },
+        enabled = downloadableEpisodes.isNotEmpty() && !progress.running,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = horizontalPadding),
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Icon(Icons.Rounded.Download, contentDescription = null)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            if (progress.running) {
+                "جاري تجهيز الحلقات ${progress.processed}/${progress.total}"
+            } else {
+                "تنزيل الموسم كامل (${downloadableEpisodes.size} حلقة)"
+            },
+        )
     }
 }
 
