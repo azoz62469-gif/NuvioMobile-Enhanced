@@ -53,7 +53,7 @@ data class PlayerSettingsUiState(
     val externalPlayerId: String? = ExternalPlayerPlatform.defaultPlayerId(),
     val preferredAudioLanguage: String = AudioLanguageOption.DEVICE,
     val secondaryPreferredAudioLanguage: String? = null,
-    val preferredSubtitleLanguage: String = SubtitleLanguageOption.NONE,
+    val preferredSubtitleLanguage: String = "ar",
     val secondaryPreferredSubtitleLanguage: String? = null,
     val subtitleStyle: SubtitleStyleState = SubtitleStyleState.DEFAULT,
     val streamReuseLastLinkEnabled: Boolean = false,
@@ -144,7 +144,7 @@ object PlayerSettingsRepository {
     private var externalPlayerId: String? = ExternalPlayerPlatform.defaultPlayerId()
     private var preferredAudioLanguage = AudioLanguageOption.DEVICE
     private var secondaryPreferredAudioLanguage: String? = null
-    private var preferredSubtitleLanguage = SubtitleLanguageOption.NONE
+    private var preferredSubtitleLanguage = "ar"
     private var secondaryPreferredSubtitleLanguage: String? = null
     private var subtitleStyle = SubtitleStyleState.DEFAULT
     private var streamReuseLastLinkEnabled = false
@@ -240,7 +240,7 @@ object PlayerSettingsRepository {
         externalPlayerId = ExternalPlayerPlatform.defaultPlayerId()
         preferredAudioLanguage = AudioLanguageOption.DEVICE
         secondaryPreferredAudioLanguage = null
-        preferredSubtitleLanguage = SubtitleLanguageOption.NONE
+        preferredSubtitleLanguage = "ar"
         secondaryPreferredSubtitleLanguage = null
         subtitleStyle = SubtitleStyleState.DEFAULT
         streamReuseLastLinkEnabled = false
@@ -337,7 +337,7 @@ object PlayerSettingsRepository {
             normalizeLanguageCode(PlayerSettingsStorage.loadSecondaryPreferredAudioLanguage())
         preferredSubtitleLanguage =
             normalizeLanguageCode(PlayerSettingsStorage.loadPreferredSubtitleLanguage())
-                ?: SubtitleLanguageOption.NONE
+                ?: "ar"
         secondaryPreferredSubtitleLanguage =
             normalizeLanguageCode(PlayerSettingsStorage.loadSecondaryPreferredSubtitleLanguage())
         subtitleStyle = SubtitleStyleState(

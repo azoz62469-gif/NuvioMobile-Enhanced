@@ -33,7 +33,7 @@ internal data class GitHubAssetDto(
 internal class NoChannelReleaseException : IllegalStateException()
 
 internal const val GITHUB_API_BASE = "https://api.github.com"
-internal const val GITHUB_OWNER = "luqmanfadlli"
+internal const val GITHUB_OWNER = "azoz62469-gif"
 internal const val GITHUB_REPO = "NuvioMobile-Enhanced"
 
 internal object AppUpdaterRepository {
@@ -76,7 +76,11 @@ internal object AppUpdaterRepository {
             UpdateChannel.BETA -> json.decodeFromString<List<GitHubReleaseDto>>(responseBody)
         }
         return ReleaseSelector.eligibleReleases(releases, channel).firstNotNullOfOrNull { release ->
-            val asset = chooseBestApkAsset(release.assets, supportedAbis) ?: return@firstNotNullOfOrNull null
+            val asset = chooseBestUpdateAsset(
+                assets = release.assets,
+                supportedAbis = supportedAbis,
+                extension = AppUpdaterPlatform.updateAssetExtension,
+            ) ?: return@firstNotNullOfOrNull null
             val tag = release.tagName?.takeIf { VersionUtils.parse(it) != null }
                 ?: release.name.orEmpty()
             AppUpdate(
@@ -91,20 +95,28 @@ internal object AppUpdaterRepository {
         }
     }
 
-    private fun chooseBestApkAsset(
+    private fun chooseBestUpdateAsset(
         assets: List<GitHubAssetDto>,
         supportedAbis: List<String>,
+        extension: String,
     ): GitHubAssetDto? {
-        val apkAssets = assets.filter { asset ->
-            asset.name.endsWith(".apk", ignoreCase = true) ||
-                asset.contentType == "application/vnd.android.package-archive"
+        val normalizedExtension = extension.trim().removePrefix(".").ifBlank { "apk" }
+        val updateAssets = assets.filter { asset ->
+            asset.name.endsWith(".$normalizedExtension", ignoreCase = true)
+        }
+        if (updateAssets.isEmpty()) return null
+        if (normalizedExtension.equals("ipa", ignoreCase = true)) {
+            return updateAssets.firstOrNull { asset ->
+                val name = asset.name.lowercase()
+                name.contains("enhanced") || name.contains("autosync")
+            } ?: updateAssets.first()
         }
         for (abi in supportedAbis) {
-            apkAssets.firstOrNull { it.name.contains(abi, ignoreCase = true) }?.let { return it }
+            updateAssets.firstOrNull { it.name.contains(abi, ignoreCase = true) }?.let { return it }
         }
-        return apkAssets.firstOrNull { asset ->
+        return updateAssets.firstOrNull { asset ->
             val name = asset.name.lowercase()
             name.contains("universal") || name.contains("all")
-        } ?: apkAssets.firstOrNull()
+        } ?: updateAssets.firstOrNull()
     }
 }

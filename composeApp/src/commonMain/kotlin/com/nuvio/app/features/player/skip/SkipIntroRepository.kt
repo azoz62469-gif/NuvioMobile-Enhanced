@@ -89,8 +89,28 @@ object SkipIntroRepository {
         }
 
         val simklIds = simklIdsDeferred.await()
-        val malId = simklIds?.mal
+        var malId = simklIds?.mal
         val anilistId = simklIds?.anilist
+
+        if (malId.isNullOrBlank()) {
+            val armEntries = resolveImdbEntries(imdbId)
+            malId = chooseSeasonScopedMalId(
+                ids = armEntries.map { it.myanimelist?.toString() },
+                season = season,
+            )
+            InAppLogger.debug(
+                "Player/SkipIntro",
+                "ARM anime id fallback imdb=$imdbId s=$season " +
+                    "entries=${armEntries.size} malResolved=${malId != null}",
+            )
+        }
+        val resolvedMalId = malId?.takeIf { it.isNotBlank() }
+        if (resolvedMalId == null && anilistId == null) {
+            InAppLogger.debug(
+                "Player/SkipIntro",
+                "AniSkip unavailable imdb=$imdbId s=$season e=$episode reason=no_mapped_anime_id",
+            )
+        }
 
         // Remap the TVDB episode number to the anime-entry-local episode number.
         val animeEpisode = if (simklIds != null) {
@@ -101,7 +121,11 @@ object SkipIntroRepository {
         } else episode
 
         val aniSkipDeferred = async {
-            if (malId != null) fetchFromAniSkip(malId, animeEpisode) else emptyList()
+            if (resolvedMalId != null) {
+                fetchFromAniSkip(resolvedMalId, animeEpisode)
+            } else {
+                emptyList()
+            }
         }
         val animeSkipDeferred = async {
             if (anilistId != null) fetchFromAnimeSkip(anilistId, animeEpisode, season = null) else emptyList()

@@ -1000,7 +1000,7 @@ internal object AutoSyncTimelineRetimer {
             cues = retimed,
             groups = emptyList(),
             targetCoverage = 1.0,
-            referenceCoverage = 0.0,
+            referenceCoverage = alignment.score,
             skippedTargetCues = 0,
             skippedReferenceCues = 0,
             longestTargetSkipRun = 0,

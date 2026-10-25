@@ -29,16 +29,29 @@ object SubtitleRepository {
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private var activeFetchJob: Job? = null
+    private var fetchGeneration = 0L
 
-    fun fetchAddonSubtitles(type: String, videoId: String) {
+    fun fetchAddonSubtitles(
+        type: String,
+        videoId: String,
+        seasonNumber: Int? = null,
+        episodeNumber: Int? = null,
+    ) {
+        val generation = ++fetchGeneration
         activeFetchJob?.cancel()
         _loadingProgress.value = null
         activeFetchJob = scope.launch {
+            if (generation != fetchGeneration) return@launch
             _isLoading.value = true
             _error.value = null
             _addonSubtitles.value = emptyList()
 
-            val requests = addonSubtitleRequests(type, videoId)
+            val requests = addonSubtitleRequests(
+                type = type,
+                videoId = videoId,
+                seasonNumber = seasonNumber,
+                episodeNumber = episodeNumber,
+            )
             if (requests.isEmpty()) {
                 _isLoading.value = false
                 return@launch
@@ -46,12 +59,15 @@ object SubtitleRepository {
 
             _loadingProgress.value = SubtitleLoadingProgress(total = requests.size)
             loadAddonSubtitles(requests) { request, subtitles ->
-                _addonSubtitles.update { it + subtitles }
-                _loadingProgress.update { progress ->
-                    progress?.copy(completed = progress.completed + 1, addonName = request.addonName)
+                if (generation == fetchGeneration) {
+                    _addonSubtitles.update { it + subtitles }
+                    _loadingProgress.update { progress ->
+                        progress?.copy(completed = progress.completed + 1, addonName = request.addonName)
+                    }
                 }
             }
 
+            if (generation != fetchGeneration) return@launch
             if (_addonSubtitles.value.isEmpty()) {
                 _error.value = getString(Res.string.compose_player_no_subtitles_found)
             }
@@ -60,6 +76,7 @@ object SubtitleRepository {
     }
 
     fun clear() {
+        fetchGeneration++
         activeFetchJob?.cancel()
         _loadingProgress.value = null
         _addonSubtitles.value = emptyList()

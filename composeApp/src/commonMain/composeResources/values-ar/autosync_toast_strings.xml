@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="autosync_toast_failed">فشلت المزامنة: تعذّر مطابقة هذه الترجمة مع الفيديو.</string>
+    <string name="autosync_toast_failed_no_reference">فشلت المزامنة: لا توجد ترجمة مدمجة صالحة للمقارنة.</string>
+    <string name="autosync_toast_failed_unsupported">فشلت المزامنة: صيغة هذه الترجمة غير مدعومة.</string>
+    <string name="autosync_label_synced">تمت المزامنة تلقائيًا</string>
+    <string name="autosync_subtitle_picker_failed_open">تعذّر فتح منتقي ملفات الترجمة.</string>
+    <string name="autosync_subtitle_picker_failed_copy">تعذّر نسخ ملف الترجمة المحدد.</string>
+    <string name="autosync_subtitle_picker_failed_read">تعذّر قراءة ملف الترجمة المحدد.</string>
+    <string name="autosync_toast_manual_fallback">تعذّر التحقق من المزامنة؛ أُبقيت الترجمة بتوقيتها الأصلي. استخدم «تأخير الترجمة» للضبط اليدوي.</string>
+</resources>

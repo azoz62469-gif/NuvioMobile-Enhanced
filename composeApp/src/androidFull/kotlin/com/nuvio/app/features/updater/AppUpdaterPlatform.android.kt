@@ -4,8 +4,12 @@ actual object AppUpdaterPlatform {
     actual val isSupported: Boolean = true
     actual val isDebugBuild: Boolean
         get() = AndroidAppUpdaterPlatform.isDebugBuild()
+    actual val updateAssetExtension: String = "apk"
+    actual val opensUpdatePageExternally: Boolean = false
 
     actual fun getSupportedAbis(): List<String> = AndroidAppUpdaterPlatform.getSupportedAbis()
+
+    actual fun openUpdatePage(url: String): Boolean = false
 
     actual fun getIgnoredTag(): String? = AndroidAppUpdaterPlatform.getIgnoredTag()
 

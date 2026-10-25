@@ -322,7 +322,7 @@
     <string name="collections_pinned">مثبّتة</string>
     <string name="collections_tab_all">الكل</string>
     <string name="collections_your_collections">مجموعاتك</string>
-    <string name="compose_about_made_with">صنع بكل ❤️ بواسطة Tapframe والأصدقاء</string>
+    <string name="compose_about_made_with">صنع بكل ❤️ بواسطة Tapframe والأصدقاء\nMade by AZOS</string>
     <string name="compose_about_version_format">الإصدار %1$s (%2$s)</string>
     <string name="compose_action_off">معطل</string>
     <string name="compose_action_on">مفعل</string>
@@ -403,6 +403,7 @@
     <string name="compose_player_subs">الترجمات</string>
     <string name="compose_player_subtitle_delay">تأخير الترجمة</string>
     <string name="compose_player_subtitles">الترجمات</string>
+    <string name="compose_player_add_subtitle_file">إضافة ملف ترجمة</string>
     <string name="compose_player_text_opacity">شفافية النص</string>
     <string name="compose_player_brightness_level">السطوع %1$s</string>
     <string name="compose_player_volume_level">مستوى الصوت %1$s</string>

@@ -31,6 +31,10 @@ data class AddonSubtitle(
     val language: String,
     val display: String,
     val addonName: String? = null,
+    val sourceName: String? = null,
+    val videoContextKey: String? = null,
+    val seasonNumber: Int? = null,
+    val episodeNumber: Int? = null,
     val isSelected: Boolean = false,
 )
 

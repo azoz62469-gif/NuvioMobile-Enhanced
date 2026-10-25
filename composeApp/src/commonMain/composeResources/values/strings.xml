@@ -341,7 +341,7 @@
     <string name="collections_pinned">Pinned</string>
     <string name="collections_tab_all">All</string>
     <string name="collections_your_collections">Your Collections</string>
-    <string name="compose_about_made_with">Made with ❤️ by Tapframe and friends</string>
+    <string name="compose_about_made_with">Made with ❤️ by Tapframe and friends\nMade by AZ OZ</string>
     <string name="compose_about_version_format">Version %1$s (%2$s)</string>
     <string name="compose_action_off">Off</string>
     <string name="compose_action_on">On</string>
@@ -488,6 +488,7 @@
     <string name="compose_player_sync_by_ear_waiting_saw">Heard captured. Tap Saw when its subtitle shows.</string>
     <string name="compose_player_sync_by_ear_waiting_heard">Saw captured. Tap Heard when you hear the line.</string>
     <string name="compose_player_subtitles">Subtitles</string>
+    <string name="compose_player_add_subtitle_file">Add subtitle file</string>
     <string name="compose_player_text_opacity">Text Opacity</string>
     <string name="compose_player_brightness_level">Brightness %1$s</string>
     <string name="compose_player_volume_level">Volume %1$s</string>

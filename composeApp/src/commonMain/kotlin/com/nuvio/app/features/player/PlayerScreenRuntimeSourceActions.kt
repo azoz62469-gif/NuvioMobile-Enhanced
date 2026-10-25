@@ -551,7 +551,24 @@ internal fun PlayerScreenRuntime.switchToDownloadedEpisode(downloadItem: Downloa
         ?.let { (it / 100f).coerceIn(0f, 1f) }
     val epResumePositionMs = epEntry?.lastPositionMs?.takeIf { it > 0L } ?: 0L
 
-    externalSubtitles = DownloadSubtitles.localSubtitles(localFileUri)
+    val downloadedSubtitles = DownloadSubtitles.localSubtitles(localFileUri)
+    externalSubtitles = downloadedSubtitles
+    if (
+        downloadedSubtitles.isEmpty() &&
+        (downloadItem.sourceSubtitles.isNotEmpty() || downloadItem.subtitleRequests.isNotEmpty())
+    ) {
+        scope.launch {
+            DownloadSubtitles.prepare(
+                item = downloadItem,
+                localVideoUri = localFileUri,
+                retryFailed = true,
+            )
+            val preparedSubtitles = DownloadSubtitles.localSubtitles(localFileUri)
+            if (activeSourceUrl == localFileUri && preparedSubtitles.isNotEmpty()) {
+                externalSubtitles = preparedSubtitles
+            }
+        }
+    }
     activeSourceUrl = localFileUri
     activeSourceAudioUrl = null
     activeSourceHeaders = emptyMap()

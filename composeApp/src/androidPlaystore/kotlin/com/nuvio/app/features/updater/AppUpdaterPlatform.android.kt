@@ -8,8 +8,12 @@ import org.jetbrains.compose.resources.getString
 actual object AppUpdaterPlatform {
     actual val isSupported: Boolean = false
     actual val isDebugBuild: Boolean = false
+    actual val updateAssetExtension: String = "apk"
+    actual val opensUpdatePageExternally: Boolean = false
 
     actual fun getSupportedAbis(): List<String> = emptyList()
+
+    actual fun openUpdatePage(url: String): Boolean = false
 
     actual fun getIgnoredTag(): String? = null
 

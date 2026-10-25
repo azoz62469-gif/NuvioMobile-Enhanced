@@ -4,4 +4,8 @@
     <string name="autosync_toast_failed_no_reference">Sync failed: No usable embedded subtitles to compare with.</string>
     <string name="autosync_toast_failed_unsupported">Sync failed: This subtitle format is not supported.</string>
     <string name="autosync_label_synced">Auto synced</string>
+    <string name="autosync_subtitle_picker_failed_open">Unable to open the subtitle file picker.</string>
+    <string name="autosync_subtitle_picker_failed_copy">Unable to copy the selected subtitle file.</string>
+    <string name="autosync_subtitle_picker_failed_read">Unable to read the selected subtitle file.</string>
+    <string name="autosync_toast_manual_fallback">Sync could not be verified. The original subtitle timing was kept; use Subtitle Delay to adjust it manually.</string>
 </resources>

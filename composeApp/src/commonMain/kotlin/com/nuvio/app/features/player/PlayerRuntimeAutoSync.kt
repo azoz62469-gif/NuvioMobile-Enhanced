@@ -8,17 +8,48 @@ import com.nuvio.app.features.autosync.AutoSyncPreferencesRepository
 import com.nuvio.app.features.autosync.AutoSyncSubtitleCandidate
 import kotlinx.coroutines.flow.collect
 
-private fun List<AddonSubtitle>.toAutoSyncCandidates(): List<AutoSyncSubtitleCandidate> =
-    map { subtitle ->
+private fun PlayerScreenRuntime.toAutoSyncCandidates(
+    subtitles: List<AddonSubtitle>,
+): List<AutoSyncSubtitleCandidate> {
+    val currentExternalUrls = externalSubtitles.mapTo(hashSetOf()) { it.url }
+    return subtitles.mapNotNull { subtitle ->
+        val isCurrentStreamSubtitle = subtitle.videoContextKey == null &&
+            subtitle.url in currentExternalUrls
+        if (subtitle.videoContextKey == null && !isCurrentStreamSubtitle) {
+            return@mapNotNull null
+        }
+        if (subtitle.videoContextKey != null && subtitle.videoContextKey != activeVideoId) {
+            return@mapNotNull null
+        }
+        if (subtitle.videoContextKey != null &&
+            (subtitle.seasonNumber != activeSeasonNumber ||
+                subtitle.episodeNumber != activeEpisodeNumber)
+        ) {
+            return@mapNotNull null
+        }
         AutoSyncSubtitleCandidate(
             url = subtitle.url,
             language = subtitle.language,
-            name = subtitle.display,
+            name = subtitle.sourceName ?: subtitle.display,
+            addonName = subtitle.addonName,
+            sourceName = subtitle.sourceName,
+            videoContextKey = subtitle.videoContextKey ?: activeVideoId,
+            seasonNumber = if (isCurrentStreamSubtitle) {
+                activeSeasonNumber
+            } else {
+                subtitle.seasonNumber
+            },
+            episodeNumber = if (isCurrentStreamSubtitle) {
+                activeEpisodeNumber
+            } else {
+                subtitle.episodeNumber
+            },
         )
     }
+}
 
 private fun PlayerScreenRuntime.currentAutoSyncCandidates(): List<AutoSyncSubtitleCandidate> =
-    addonSubtitles.toAutoSyncCandidates()
+    toAutoSyncCandidates(addonSubtitles)
 
 internal fun PlayerScreenRuntime.configureAutoSyncController(
     controller: PlayerEngineController,
@@ -49,7 +80,12 @@ internal fun PlayerScreenRuntime.configureAutoSyncController(
 @Composable
 internal fun PlayerScreenRuntime.BindAutoSyncRuntimeEffects() {
     val activeController = playerController
-    DisposableEffect(activeController) {
+    DisposableEffect(
+        activeController,
+        activeVideoId,
+        activeSeasonNumber,
+        activeEpisodeNumber,
+    ) {
         // Runs once playerController is set, which Nuvio only does for the live playback key.
         activeController?.let { configureAutoSyncController(it) }
         onDispose { activeController?.setAutoSyncAppliedListener(null) }
@@ -65,14 +101,22 @@ internal fun PlayerScreenRuntime.BindAutoSyncRuntimeEffects() {
         preferredSubtitleSelectionApplied = false
         refreshTracks()
     }
-    LaunchedEffect(playerController, externalSubtitles) {
+    LaunchedEffect(
+        playerController,
+        externalSubtitles,
+        activeVideoId,
+        activeSeasonNumber,
+        activeEpisodeNumber,
+    ) {
         val controller = playerController ?: return@LaunchedEffect
         SubtitleRepository.addonSubtitles.collect { repositorySubtitles ->
             controller.setAutoSyncSubtitleCandidates(
-                mergeStreamAndAddonSubtitles(
-                    repositorySubtitles,
-                    externalSubtitles,
-                ).toAutoSyncCandidates(),
+                toAutoSyncCandidates(
+                    mergeStreamAndAddonSubtitles(
+                        repositorySubtitles,
+                        externalSubtitles,
+                    ),
+                ),
             )
         }
     }

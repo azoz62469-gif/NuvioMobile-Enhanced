@@ -19,28 +19,40 @@ import kotlinx.serialization.json.Json
 
 internal object DownloadSubtitles {
     private val json = Json { ignoreUnknownKeys = true }
+    private const val SUBTITLE_FETCH_TIMEOUT_MS = 5_000L
 
-    suspend fun prepare(item: DownloadItem, localVideoUri: String): Unit = withContext(Dispatchers.Default) {
+    suspend fun prepare(
+        item: DownloadItem,
+        localVideoUri: String,
+        retryFailed: Boolean = false,
+    ): Unit = withContext(Dispatchers.Default) {
         val storage = DownloadSubtitleStorage(localVideoUri)
         val manifest = readManifest(storage)
         val saved = manifest.tracks.filter { storage.localFileUri(it.fileName) != null }.toMutableList()
-        if (manifest.complete && saved.size == manifest.tracks.size) return@withContext
         var nextFileIndex = (saved.maxOfOrNull { it.fileName.substringBefore('.').toIntOrNull() ?: -1 } ?: -1) + 1
         val addonSubtitles = loadAddonSubtitles(item.subtitleRequests).map {
             StreamSubtitle(url = it.url, language = it.language, name = it.display)
         }
-        val pending = (item.sourceSubtitles + addonSubtitles)
+        val candidates = (item.sourceSubtitles + addonSubtitles)
             .distinctBy { it.url }
+        val pending = candidates
             .filter { subtitle ->
                 (subtitle.url.startsWith("https://", true) || subtitle.url.startsWith("http://", true)) &&
                     saved.none { it.sourceUrl == subtitle.url }
             }
+        if (pending.isEmpty()) {
+            val complete = item.subtitleRequests.isEmpty() || addonSubtitles.isNotEmpty() ||
+                item.sourceSubtitles.isNotEmpty()
+            writeManifest(storage, saved, complete = complete)
+            return@withContext
+        }
+        var failedFetches = 0
         for (batch in pending.chunked(4)) {
             val fetched = coroutineScope {
                 batch.map { subtitle ->
                     async {
                         val body = try {
-                            withTimeoutOrNull(15_000L) {
+                            withTimeoutOrNull(SUBTITLE_FETCH_TIMEOUT_MS) {
                                 httpGetTextWithHeaders(subtitle.url, subtitle.headers.orEmpty())
                             }?.takeIf { it.isNotBlank() && PlayerSubtitleCueParser.parse(it, subtitle.url).isNotEmpty() }
                         } catch (error: Exception) {
@@ -53,22 +65,34 @@ internal object DownloadSubtitles {
             }
             for ((subtitle, body) in fetched) {
                 currentCoroutineContext().ensureActive()
-                if (body == null) continue
+                if (body == null) {
+                    failedFetches += 1
+                    continue
+                }
                 val extension = PlayerSubtitleCueParser.fileExtension(body, subtitle.url)
                 val fileName = "${nextFileIndex++}.$extension"
                 try {
                     storage.write(fileName, body)
                     saved += DownloadedSubtitle(subtitle.url, fileName, subtitle.language, subtitle.name)
-                    storage.write("manifest.json", json.encodeToString(SubtitleManifest(tracks = saved.toList())))
+                    writeManifest(storage, saved, complete = false)
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
+                    failedFetches += 1
                 }
             }
         }
         currentCoroutineContext().ensureActive()
-        runCatching {
-            storage.write("manifest.json", json.encodeToString(SubtitleManifest(complete = true, tracks = saved)))
+        val allCandidatesSaved = candidates.all { candidate ->
+            saved.any { it.sourceUrl == candidate.url }
         }
+        val complete = failedFetches == 0 &&
+            allCandidatesSaved &&
+            (
+                !retryFailed ||
+                    item.subtitleRequests.isEmpty() ||
+                    addonSubtitles.isNotEmpty()
+                )
+        writeManifest(storage, saved, complete = complete)
         Unit
     }
 
@@ -85,6 +109,19 @@ internal object DownloadSubtitles {
         runCatching {
             storage.read("manifest.json")?.let { json.decodeFromString<SubtitleManifest>(it) }
         }.getOrNull() ?: SubtitleManifest()
+
+    private fun writeManifest(
+        storage: DownloadSubtitleStorage,
+        tracks: List<DownloadedSubtitle>,
+        complete: Boolean,
+    ) {
+        runCatching {
+            storage.write(
+                "manifest.json",
+                json.encodeToString(SubtitleManifest(complete = complete, tracks = tracks)),
+            )
+        }
+    }
 }
 
 @Serializable

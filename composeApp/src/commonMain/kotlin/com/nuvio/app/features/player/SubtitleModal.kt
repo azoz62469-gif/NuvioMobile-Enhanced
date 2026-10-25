@@ -54,6 +54,7 @@ import nuvio.composeapp.generated.resources.addon_title
 import nuvio.composeapp.generated.resources.compose_player_built_in
 import nuvio.composeapp.generated.resources.compose_player_fetch_subtitles
 import nuvio.composeapp.generated.resources.compose_player_languages
+import nuvio.composeapp.generated.resources.compose_player_add_subtitle_file
 import nuvio.composeapp.generated.resources.compose_player_none
 import nuvio.composeapp.generated.resources.compose_player_style
 import nuvio.composeapp.generated.resources.compose_player_subtitles
@@ -78,6 +79,7 @@ fun SubtitleModal(
     onBuiltInTrackSelected: (Int) -> Unit,
     onAddonSubtitleSelected: (AddonSubtitle) -> Unit,
     onFetchAddonSubtitles: () -> Unit,
+    onPickSubtitleFile: (() -> Unit)? = null,
     onStyleChanged: (SubtitleStyleState) -> Unit,
     onSubtitleDelayChanged: (Int) -> Unit,
     onSubtitleDelayReset: () -> Unit,
@@ -227,6 +229,12 @@ fun SubtitleModal(
                         title = stringResource(Res.string.compose_player_subtitles),
                         width = 300.dp,
                     ) {
+                        onPickSubtitleFile?.let { pickSubtitleFile ->
+                            SubtitleRailEmptyState(
+                                text = stringResource(Res.string.compose_player_add_subtitle_file),
+                                onClick = pickSubtitleFile,
+                            )
+                        }
                         when {
                             options.isEmpty() -> {
                                 when (

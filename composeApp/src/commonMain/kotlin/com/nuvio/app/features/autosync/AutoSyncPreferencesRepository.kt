@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
  * Nuvio's general PlayerSettingsRepository/PlayerSettingsStorage architecture.
  */
 internal object AutoSyncPreferencesRepository {
-    private val _preferredSubtitleAutoSyncOnStart = MutableStateFlow(false)
+    private val _preferredSubtitleAutoSyncOnStart = MutableStateFlow(true)
     val preferredSubtitleAutoSyncOnStart: StateFlow<Boolean> =
         _preferredSubtitleAutoSyncOnStart.asStateFlow()
 
     /** Thorough search: stop only on a stronger match; the applied match is gated the same. */
-    private val _aggressiveMode = MutableStateFlow(true)
+    private val _aggressiveMode = MutableStateFlow(false)
     val aggressiveMode: StateFlow<Boolean> = _aggressiveMode.asStateFlow()
 
     /** Keep the original timing when the needed correction is at most this; 0 disables it. */
@@ -56,8 +56,8 @@ internal object AutoSyncPreferencesRepository {
         val profileId = ProfileRepository.activeProfileId
         if (loadedProfileId == profileId) return
 
-        _preferredSubtitleAutoSyncOnStart.value = loadPersistedValue?.invoke() ?: false
-        _aggressiveMode.value = loadAggressiveModePersistedValue?.invoke() ?: true
+        _preferredSubtitleAutoSyncOnStart.value = loadPersistedValue?.invoke() ?: true
+        _aggressiveMode.value = loadAggressiveModePersistedValue?.invoke() ?: false
         _syncToleranceMs.value = loadSyncTolerancePersistedValue?.invoke()
             ?.takeIf { it in syncToleranceOptionsMs } ?: 0
         loadedProfileId = profileId
@@ -88,8 +88,17 @@ internal object AutoSyncPreferencesRepository {
 
     fun claimStartupRun(sessionKey: Int, playbackKey: String): Boolean {
         ensureLoaded()
-        if (!_preferredSubtitleAutoSyncOnStart.value) return false
-        if (lastStartupSessionKey == sessionKey && lastStartupPlaybackKey == playbackKey) return false
+        if (
+            !shouldClaimAutoSyncStartupRun(
+                enabled = _preferredSubtitleAutoSyncOnStart.value,
+                lastSessionKey = lastStartupSessionKey,
+                lastPlaybackKey = lastStartupPlaybackKey,
+                sessionKey = sessionKey,
+                playbackKey = playbackKey,
+            )
+        ) {
+            return false
+        }
 
         lastStartupSessionKey = sessionKey
         lastStartupPlaybackKey = playbackKey

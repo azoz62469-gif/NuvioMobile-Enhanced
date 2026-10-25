@@ -13,6 +13,8 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
     private var experimentalSinglePrimaryPictureInPictureEnabled = false
     private var keyboardShortcutsEnabled = true
     private var keyboardShortcutHandler: ((String) -> Void)?
+    private var subtitleReferenceGeneration = 0
+    private var subtitleReferenceLoader: FFmpegEmbeddedSubtitleReferenceLoader?
 
     func createPlayerViewController() -> UIViewController {
         return ensurePlayerViewController()
@@ -194,6 +196,35 @@ final class MPVPlayerBridgeImpl: NSObject, NuvioPlayerBridge {
     func selectAudioTrack(trackId: Int32) { playerVC?.selectAudio(Int(trackId)) }
     func selectSubtitleTrack(trackId: Int32) { playerVC?.selectSubtitle(Int(trackId)) }
     func setSubtitleUrl(url: String) { playerVC?.addSubtitleUrl(url) }
+    func loadEmbeddedSubtitleReferences(
+        sourceUrl: String,
+        headersJson: String?,
+        completion: @escaping (String) -> Void
+    ) {
+        subtitleReferenceGeneration += 1
+        let generation = subtitleReferenceGeneration
+        subtitleReferenceLoader?.cancel()
+        let loader = FFmpegEmbeddedSubtitleReferenceLoader(
+            url: sourceUrl,
+            headers: parseRequestHeaders(headersJson)
+        )
+        subtitleReferenceLoader = loader
+        DispatchQueue.global(qos: .utility).async {
+            let json = loader.load()
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.subtitleReferenceGeneration == generation else { return }
+                self.subtitleReferenceLoader = nil
+                completion(json)
+            }
+        }
+    }
+
+    func cancelEmbeddedSubtitleReferenceLoad() {
+        subtitleReferenceGeneration += 1
+        subtitleReferenceLoader?.cancel()
+        subtitleReferenceLoader = nil
+    }
+
     func clearExternalSubtitle() { playerVC?.removeExternalSubtitles() }
     func clearExternalSubtitleAndSelect(trackId: Int32) { playerVC?.removeExternalSubtitlesAndSelect(Int(trackId)) }
     func setSubtitleDelayMs(delayMs: Int32) { playerVC?.setSubtitleDelayMs(Int(delayMs)) }

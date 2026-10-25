@@ -29,9 +29,17 @@ data class SubtitleAddonRequest(
     val url: String,
     val addonId: String,
     val addonName: String,
+    val videoId: String = "",
+    val seasonNumber: Int? = null,
+    val episodeNumber: Int? = null,
 )
 
-internal fun addonSubtitleRequests(type: String, videoId: String): List<SubtitleAddonRequest> {
+internal fun addonSubtitleRequests(
+    type: String,
+    videoId: String,
+    seasonNumber: Int? = null,
+    episodeNumber: Int? = null,
+): List<SubtitleAddonRequest> {
     if (ServerItemRef.isServerId(videoId)) return emptyList()
     val requestType = canonicalSubtitleType(type)
     return AddonRepository.uiState.value.addons.enabledAddons().mapNotNull { addon ->
@@ -44,6 +52,9 @@ internal fun addonSubtitleRequests(type: String, videoId: String): List<Subtitle
             url = buildAddonResourceUrl(manifest.transportUrl, "subtitles", requestType, videoId),
             addonId = manifest.id,
             addonName = addon.displayTitle,
+            videoId = videoId,
+            seasonNumber = seasonNumber,
+            episodeNumber = episodeNumber,
         )
     }
 }
@@ -55,7 +66,7 @@ internal suspend fun loadAddonSubtitles(
     requests.map { request ->
         async {
             val subtitles = try {
-                withTimeoutOrNull(10_000L) {
+                withTimeoutOrNull(5_000L) {
                     parseAddonSubtitles(fetchAddonResponseText(request.url), request)
                 }.orEmpty()
             } catch (error: Exception) {
@@ -76,6 +87,9 @@ private suspend fun parseAddonSubtitles(response: String, request: SubtitleAddon
         val url = obj.stringValue("url") ?: return@mapIndexedNotNull null
         val language = listOf("lang", "language", "languageCode", "locale", "label")
             .firstNotNullOfOrNull(obj::stringValue) ?: "unknown"
+        val sourceName = obj.stringValue("name")
+            ?: obj.stringValue("filename")
+            ?: url.substringBefore('?').substringAfterLast('/').takeIf { it.isNotBlank() }
         AddonSubtitle(
             id = obj.stringValue("id") ?: "${request.addonId}_$index",
             url = url,
@@ -86,6 +100,10 @@ private suspend fun parseAddonSubtitles(response: String, request: SubtitleAddon
                 request.addonName,
             ),
             addonName = request.addonName,
+            sourceName = sourceName,
+            videoContextKey = request.videoId,
+            seasonNumber = request.seasonNumber,
+            episodeNumber = request.episodeNumber,
         )
     }
 }
