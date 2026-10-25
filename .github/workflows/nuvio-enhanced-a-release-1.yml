@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: nuvio-enhanced-a-release-1
@@ -113,3 +113,21 @@ jobs:
           path: build/ios-ipa/*.ipa
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish Release 1
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source_ipa="$(find build/ios-ipa -maxdepth 1 -type f -name '*-release.ipa' -print -quit)"
+          release_ipa="build/Nuvio-Enhanced-A-Release-1.ipa"
+          cp "${source_ipa}" "${release_ipa}"
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release upload v1.0.0 "${release_ipa}#Nuvio-Enhanced-A-Release-1.ipa" --clobber
+          else
+            gh release create v1.0.0 \
+              "${release_ipa}#Nuvio-Enhanced-A-Release-1.ipa" \
+              --target "${GITHUB_SHA}" \
+              --title "Nuvio Enhanced A - الإصدار الأول" \
+              --notes "إصدار iPad الكامل المبني من أساس v17. يشمل AutoSync، التحميل مع الترجمة، العربية افتراضياً، وإزالة عدّاد المزامنة من المشغل. ملف IPA غير موقع ويحتاج إلى توقيع قبل التثبيت."
+          fi
