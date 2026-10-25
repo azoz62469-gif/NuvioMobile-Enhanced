@@ -79,11 +79,11 @@ jobs:
             echo "kotlin.native.disableCompilerDaemon=true"
           } >> "${gradle_user_home}/gradle.properties"
 
-      - name: Validate player and AutoSync logic
-        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon
-
       - name: Prepare iOS dependencies
         run: ./scripts/prepare-ios-dependencies.sh
+
+      - name: Validate player and AutoSync logic
+        run: ./gradlew :composeApp:iosSimulatorArm64Test --no-daemon
 
       - name: Build unsigned iPad IPA
         run: ./scripts/build-ios-ipa.sh
