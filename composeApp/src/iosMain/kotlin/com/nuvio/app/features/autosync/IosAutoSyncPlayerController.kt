@@ -450,6 +450,23 @@ internal class IosAutoSyncPlayerController(
                     showManualFallback(token, currentSourceUrl)
                     return@launch
                 }
+                if (
+                    !isConfidentAutoSyncMatch(
+                        score = match.score,
+                        targetCoverage = match.timeline.targetCoverage,
+                        referenceCoverage = match.timeline.referenceCoverage,
+                        sampledReference = match.reference.sampled,
+                    )
+                ) {
+                    InAppLogger.warn(
+                        "AutoSync/iOS",
+                        "match below safe apply threshold score=${match.score} " +
+                            "target=${match.timeline.targetCoverage} " +
+                            "reference=${match.timeline.referenceCoverage}",
+                    )
+                    showManualFallback(token, currentSourceUrl)
+                    return@launch
+                }
 
                 updateProgress(token, 92, "تم العثور على مطابقة؛ جارٍ تطبيق التوقيت")
                 val tolerance = AutoSyncPreferencesRepository.syncToleranceMs.value
@@ -1105,13 +1122,13 @@ internal class IosAutoSyncPlayerController(
     )
 
     private companion object {
-        const val MAX_ALTERNATIVES = 6
-        const val MAX_ADDON_REFERENCES = 6
+        const val MAX_ALTERNATIVES = 3
+        const val MAX_ADDON_REFERENCES = 4
         const val MAX_ASR_ADDON_REFERENCES = 6
         const val MIN_REFERENCE_CUES = 4
         const val MIN_AUDIO_REFERENCE_CUES = 8
         const val MIN_ASR_WORDS = 8
-        const val CANDIDATE_TIMEOUT_MS = 20_000L
+        const val CANDIDATE_TIMEOUT_MS = 3_500L
         const val STRONG_MATCH_SCORE = 0.92
         const val STRONG_TARGET_COVERAGE = 0.98
         const val STRONG_REFERENCE_COVERAGE = 0.90

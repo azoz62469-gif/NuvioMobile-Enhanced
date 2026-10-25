@@ -8,6 +8,24 @@ internal fun canApplyAutoSyncResult(
     sourceUnchanged: Boolean,
 ): Boolean = enabled && capturedToken == currentToken && sourceUnchanged
 
+/**
+ * A confident matcher result is still not enough to rewrite a subtitle unless enough of both
+ * timelines agree. This final gate prevents weak fallback matches from damaging good timing.
+ */
+internal fun isConfidentAutoSyncMatch(
+    score: Double,
+    targetCoverage: Double,
+    referenceCoverage: Double,
+    sampledReference: Boolean,
+): Boolean =
+    if (sampledReference) {
+        score >= 0.86
+    } else {
+        score >= 0.84 &&
+            targetCoverage >= 0.92 &&
+            referenceCoverage >= 0.65
+    }
+
 internal fun shouldShowManualFallbackNotice(
     capturedToken: Long,
     currentToken: Long,

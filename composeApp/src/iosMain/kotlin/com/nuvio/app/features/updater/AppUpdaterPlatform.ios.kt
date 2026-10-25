@@ -2,23 +2,50 @@ package com.nuvio.app.features.updater
 
 import kotlinx.coroutines.runBlocking
 import platform.Foundation.NSUserDefaults
+import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.updates_not_available
 import org.jetbrains.compose.resources.getString
 
 actual object AppUpdaterPlatform {
-    actual val isSupported: Boolean = false
+    actual val isSupported: Boolean = true
     actual val isDebugBuild: Boolean = false
+    actual val updateAssetExtension: String = "ipa"
+    actual val opensUpdatePageExternally: Boolean = true
 
     actual fun getSupportedAbis(): List<String> = emptyList()
 
-    actual fun getIgnoredTag(): String? = null
+    actual fun openUpdatePage(url: String): Boolean {
+        val nativeUrl = NSURL(string = url) ?: return false
+        val application = UIApplication.sharedApplication
+        if (!application.canOpenURL(nativeUrl)) return false
+        application.openURL(
+            url = nativeUrl,
+            options = emptyMap<Any?, Any>(),
+            completionHandler = null,
+        )
+        return true
+    }
 
-    actual fun setIgnoredTag(tag: String?) = Unit
+    actual fun getIgnoredTag(): String? =
+        NSUserDefaults.standardUserDefaults.stringForKey("nuvio_ignored_update_tag")
 
-    actual fun getUpdateChannel(): String? = null
+    actual fun setIgnoredTag(tag: String?) {
+        val defaults = NSUserDefaults.standardUserDefaults
+        if (tag == null) {
+            defaults.removeObjectForKey("nuvio_ignored_update_tag")
+        } else {
+            defaults.setObject(tag, forKey = "nuvio_ignored_update_tag")
+        }
+    }
 
-    actual fun setUpdateChannel(channel: String) = Unit
+    actual fun getUpdateChannel(): String? =
+        NSUserDefaults.standardUserDefaults.stringForKey("nuvio_update_channel")
+
+    actual fun setUpdateChannel(channel: String) {
+        NSUserDefaults.standardUserDefaults.setObject(channel, forKey = "nuvio_update_channel")
+    }
 
     actual fun getWhatsNewCache(): String? =
         NSUserDefaults.standardUserDefaults.stringForKey("nuvio_whats_new_cache")

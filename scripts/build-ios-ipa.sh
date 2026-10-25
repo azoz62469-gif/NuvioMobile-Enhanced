@@ -20,6 +20,7 @@ case "${configuration}" in
 esac
 derived_data="${IOS_DERIVED_DATA_PATH:-${repository_root}/build/ios-derived-full-${configuration_slug}}"
 output_directory="${IOS_IPA_OUTPUT_DIR:-${repository_root}/build/ios-ipa}"
+ipa_basename="${IOS_IPA_BASENAME:-nuvio-${version}-enhanced}"
 clang_module_cache="${CLANG_MODULE_CACHE_PATH:-${derived_data}/ModuleCache.noindex}"
 swiftpm_module_cache="${SWIFTPM_MODULECACHE_OVERRIDE:-${derived_data}/SwiftPMModuleCache.noindex}"
 
@@ -107,8 +108,8 @@ trap 'rm -rf "${package_root}"' EXIT
 mkdir -p "${package_root}/Payload"
 ditto "${app_path}" "${package_root}/Payload/${app_bundle_name}"
 
-ipa_path="${output_directory}/nuvio-${version}-enhanced-${configuration_slug}.ipa"
-temporary_ipa="${package_root}/nuvio-${version}-enhanced-${configuration_slug}.ipa"
+ipa_path="${output_directory}/${ipa_basename}-${configuration_slug}.ipa"
+temporary_ipa="${package_root}/${ipa_basename}-${configuration_slug}.ipa"
 (
     cd "${package_root}"
     /usr/bin/zip -qry "${temporary_ipa}" Payload

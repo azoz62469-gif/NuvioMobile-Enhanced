@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة (v16)</string>
+    <string name="settings_playback_subtitle_auto_sync">المزامنة التلقائية للترجمة</string>
     <string name="settings_playback_subtitle_auto_sync_description">زامن ترجمة الإضافة المفضلة تلقائيًا عند بدء التشغيل. يتطلب تحديد لغة ترجمة مفضلة.</string>
     <string name="settings_playback_auto_sync_mode_aggressive">بحث المزامنة: شامل</string>
     <string name="settings_playback_auto_sync_mode_aggressive_description">يواصل مقارنة الترجمات والمسارات المدمجة الأخرى للحصول على تطابق أدق قبل المزامنة. لا تُطبَّق إلا المطابقات الواثقة.</string>

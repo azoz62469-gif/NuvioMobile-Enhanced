@@ -66,7 +66,7 @@ internal suspend fun loadAddonSubtitles(
     requests.map { request ->
         async {
             val subtitles = try {
-                withTimeoutOrNull(10_000L) {
+                withTimeoutOrNull(5_000L) {
                     parseAddonSubtitles(fetchAddonResponseText(request.url), request)
                 }.orEmpty()
             } catch (error: Exception) {

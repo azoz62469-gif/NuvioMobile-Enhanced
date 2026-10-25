@@ -11,6 +11,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import com.nuvio.app.features.autosync.OfflineSubtitleReferenceIos
 import com.nuvio.app.features.autosync.SubtitleEnhancements
 import nuvio.composeapp.generated.resources.Res
@@ -54,6 +55,7 @@ private const val BACKGROUND_SESSION_IDENTIFIER = "com.nuvio.app.downloads"
 private const val DOWNLOAD_RESOURCE_TIMEOUT_SECONDS = 24.0 * 60.0 * 60.0
 private const val PROGRESS_MIN_INTERVAL_SECONDS = 0.5
 private const val PROGRESS_MIN_BYTE_DELTA = 512L * 1024L
+private const val SUBTITLE_FINALIZE_TIMEOUT_MS = 12_000L
 
 private val backgroundSessionCompletionHandlers = mutableMapOf<String, () -> Unit>()
 
@@ -453,8 +455,24 @@ private class IosBackgroundDownloadCoordinatorImpl : NSObject(), NSURLSessionDow
             val finalSize = fileSizeOrNull(destinationPath)
             val callbacks = activeDownloads.remove(downloadId)?.callbacks
             tasksByDownloadId.remove(downloadId)
-            if (callbacks != null) {
-                callbacks.onSuccess(localFileUri, finalSize)
+            subtitlePreparationScope.launch {
+                withTimeoutOrNull(SUBTITLE_FINALIZE_TIMEOUT_MS) {
+                    subtitlePreparationJobs[downloadId]?.join()
+                    val references = if (SubtitleEnhancements.state.value.offlineSync) {
+                        OfflineSubtitleReferenceIos.load(request.sourceUrl, request.sourceHeaders)
+                    } else {
+                        emptyList()
+                    }
+                    DownloadSubtitles.prepare(
+                        item = request.item,
+                        localVideoUri = localFileUri,
+                        references = references,
+                        retryFailed = true,
+                    )
+                }
+                dispatch_async(dispatch_get_main_queue()) {
+                    callbacks?.onSuccess(localFileUri, finalSize)
+                }
             }
         } finally {
             if (scopedStarted) base.scopedUrl?.stopAccessingSecurityScopedResource()

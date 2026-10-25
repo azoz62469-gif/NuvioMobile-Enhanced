@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle (v14)</string>
+    <string name="settings_playback_subtitle_auto_sync">Auto Sync Subtitle</string>
     <string name="settings_playback_subtitle_auto_sync_description">Automatically sync the preferred add-on subtitle when playback starts. Requires a preferred subtitle language.</string>
     <string name="settings_playback_auto_sync_mode_aggressive">Auto Sync Search: Thorough</string>
     <string name="settings_playback_auto_sync_mode_aggressive_description">Keeps comparing other subtitles and embedded tracks for a closer match before syncing. Only confident matches are ever applied.</string>

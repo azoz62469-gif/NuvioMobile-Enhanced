@@ -17,7 +17,7 @@ internal object AutoSyncPreferencesRepository {
         _preferredSubtitleAutoSyncOnStart.asStateFlow()
 
     /** Thorough search: stop only on a stronger match; the applied match is gated the same. */
-    private val _aggressiveMode = MutableStateFlow(true)
+    private val _aggressiveMode = MutableStateFlow(false)
     val aggressiveMode: StateFlow<Boolean> = _aggressiveMode.asStateFlow()
 
     /** Keep the original timing when the needed correction is at most this; 0 disables it. */
@@ -25,7 +25,7 @@ internal object AutoSyncPreferencesRepository {
     private val _syncToleranceMs = MutableStateFlow(0)
     val syncToleranceMs: StateFlow<Int> = _syncToleranceMs.asStateFlow()
 
-    private val _audioFallbackEnabled = MutableStateFlow(true)
+    private val _audioFallbackEnabled = MutableStateFlow(false)
     val audioFallbackEnabled: StateFlow<Boolean> = _audioFallbackEnabled.asStateFlow()
 
     private var loadedProfileId: Int? = null
@@ -66,10 +66,10 @@ internal object AutoSyncPreferencesRepository {
         if (loadedProfileId == profileId) return
 
         _preferredSubtitleAutoSyncOnStart.value = loadPersistedValue?.invoke() ?: true
-        _aggressiveMode.value = loadAggressiveModePersistedValue?.invoke() ?: true
+        _aggressiveMode.value = loadAggressiveModePersistedValue?.invoke() ?: false
         _syncToleranceMs.value = loadSyncTolerancePersistedValue?.invoke()
             ?.takeIf { it in syncToleranceOptionsMs } ?: 0
-        _audioFallbackEnabled.value = loadAudioFallbackPersistedValue?.invoke() ?: true
+        _audioFallbackEnabled.value = loadAudioFallbackPersistedValue?.invoke() ?: false
         loadedProfileId = profileId
         lastStartupSessionKey = null
         lastStartupPlaybackKey = null

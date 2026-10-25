@@ -121,4 +121,48 @@ class AutoSyncApplyPolicyTest {
             ),
         )
     }
+
+    @Test
+    fun rejectsWeakOrPoorlyCoveredMatchesBeforeRewritingTiming() {
+        assertTrue(
+            isConfidentAutoSyncMatch(
+                score = 0.90,
+                targetCoverage = 0.96,
+                referenceCoverage = 0.72,
+                sampledReference = false,
+            ),
+        )
+        assertFalse(
+            isConfidentAutoSyncMatch(
+                score = 0.76,
+                targetCoverage = 0.96,
+                referenceCoverage = 0.72,
+                sampledReference = false,
+            ),
+        )
+        assertFalse(
+            isConfidentAutoSyncMatch(
+                score = 0.90,
+                targetCoverage = 0.88,
+                referenceCoverage = 0.72,
+                sampledReference = false,
+            ),
+        )
+        assertTrue(
+            isConfidentAutoSyncMatch(
+                score = 0.88,
+                targetCoverage = 1.0,
+                referenceCoverage = 0.88,
+                sampledReference = true,
+            ),
+        )
+        assertFalse(
+            isConfidentAutoSyncMatch(
+                score = 0.82,
+                targetCoverage = 1.0,
+                referenceCoverage = 0.82,
+                sampledReference = true,
+            ),
+        )
+    }
 }

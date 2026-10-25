@@ -191,6 +191,17 @@ class AppUpdaterController internal constructor(
     fun downloadUpdate() {
         if (_uiState.value.isDownloading) return
         val update = _uiState.value.update ?: return
+        if (AppUpdaterPlatform.opensUpdatePageExternally) {
+            val url = update.releaseUrl ?: update.assetUrl
+            if (AppUpdaterPlatform.openUpdatePage(url)) {
+                dismissDialog()
+            } else {
+                scope.launch {
+                    NuvioToastController.show(getString(Res.string.updates_check_failed))
+                }
+            }
+            return
+        }
         if (_uiState.value.isDebugTest) {
             runDebugDownloadTest()
             return

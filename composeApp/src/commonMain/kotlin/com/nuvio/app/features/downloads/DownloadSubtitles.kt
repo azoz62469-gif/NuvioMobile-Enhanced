@@ -23,33 +23,44 @@ import kotlinx.serialization.json.Json
 
 internal object DownloadSubtitles {
     private val json = Json { ignoreUnknownKeys = true }
+    private const val SUBTITLE_FETCH_TIMEOUT_MS = 5_000L
 
     suspend fun prepare(
         item: DownloadItem,
         localVideoUri: String,
         references: List<AutoSyncReferenceTimeline> = emptyList(),
+        retryFailed: Boolean = false,
     ): Unit = withContext(Dispatchers.Default) {
         val storage = DownloadSubtitleStorage(localVideoUri)
         val manifest = readManifest(storage)
         val saved = manifest.tracks.filter { storage.localFileUri(it.fileName) != null }.toMutableList()
-        if (manifest.complete && saved.size == manifest.tracks.size) return@withContext
         var nextFileIndex = (saved.maxOfOrNull { it.fileName.substringBefore('.').toIntOrNull() ?: -1 } ?: -1) + 1
         val addonSubtitles = loadAddonSubtitles(item.subtitleRequests).map {
             StreamSubtitle(url = it.url, language = it.language, name = it.display)
         }
-        val pending = (item.sourceSubtitles + addonSubtitles)
+        val candidates = (item.sourceSubtitles + addonSubtitles)
             .distinctBy { it.url }
+        val pending = candidates
             .filter { subtitle ->
                 (subtitle.url.startsWith("https://", true) || subtitle.url.startsWith("http://", true)) &&
                     saved.none { it.sourceUrl == subtitle.url }
             }
+        if (pending.isEmpty()) {
+            val addonResolutionComplete =
+                item.subtitleRequests.isEmpty() || addonSubtitles.isNotEmpty() || item.sourceSubtitles.isNotEmpty()
+            storage.write(
+                "manifest.json",
+                json.encodeToString(SubtitleManifest(complete = addonResolutionComplete, tracks = saved)),
+            )
+            return@withContext
+        }
         var failed = false
         for (batch in pending.chunked(4)) {
             val fetched = coroutineScope {
                 batch.map { subtitle ->
                     async {
                         val body = try {
-                            withTimeoutOrNull(15_000L) {
+                            withTimeoutOrNull(SUBTITLE_FETCH_TIMEOUT_MS) {
                                 httpGetTextWithHeaders(subtitle.url, subtitle.headers.orEmpty())
                             }?.takeIf { it.isNotBlank() && AutoSyncSubtitleCueParser.parse(it, subtitle.url).isNotEmpty() }
                         } catch (error: Exception) {
@@ -90,8 +101,24 @@ internal object DownloadSubtitles {
             }
         }
         currentCoroutineContext().ensureActive()
+        val allCandidatesSaved = candidates.all { candidate ->
+            saved.any { it.sourceUrl == candidate.url }
+        }
+        val addonResolutionComplete =
+            !retryFailed ||
+                item.subtitleRequests.isEmpty() ||
+                addonSubtitles.isNotEmpty() ||
+                item.sourceSubtitles.isNotEmpty()
         runCatching {
-            storage.write("manifest.json", json.encodeToString(SubtitleManifest(complete = !failed, tracks = saved)))
+            storage.write(
+                "manifest.json",
+                json.encodeToString(
+                    SubtitleManifest(
+                        complete = !failed && allCandidatesSaved && addonResolutionComplete,
+                        tracks = saved,
+                    ),
+                ),
+            )
         }
         Unit
     }
