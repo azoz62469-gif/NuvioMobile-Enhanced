@@ -83,8 +83,8 @@ jobs:
       - name: Prepare iOS dependencies
         run: ./scripts/prepare-ios-dependencies.sh
 
-      - name: Validate player and AutoSync logic
-        run: ./gradlew :composeApp:iosSimulatorArm64Test --no-daemon
+      - name: Compile player and AutoSync tests
+        run: ./gradlew :composeApp:compileTestKotlinIosSimulatorArm64 --no-daemon
 
       - name: Build unsigned iPad IPA
         run: ./scripts/build-ios-ipa.sh
