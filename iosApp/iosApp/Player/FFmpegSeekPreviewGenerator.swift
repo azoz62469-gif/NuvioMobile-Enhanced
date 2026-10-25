@@ -383,8 +383,8 @@ final class FFmpegEmbeddedSubtitleReferenceLoader {
     private let abortFlag = EmbeddedSubtitleAbortFlag()
     private var openFailureReason: String?
 
-    private static let ioTimeoutMicroseconds = "5000000"
-    private static let loadTimeoutSeconds = 5.0
+    private static let ioTimeoutMicroseconds = "4500000"
+    private static let loadTimeoutSeconds = 4.5
     private static let maxCuesPerTrack = 4_000
     private static let eofErrorCode: Int32 = -541_478_725
 

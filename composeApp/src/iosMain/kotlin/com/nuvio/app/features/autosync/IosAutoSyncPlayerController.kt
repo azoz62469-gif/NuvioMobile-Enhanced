@@ -688,7 +688,7 @@ internal class IosAutoSyncPlayerController(
         const val MAX_ALTERNATIVES = 3
         const val MAX_ADDON_REFERENCES = 4
         const val MIN_REFERENCE_CUES = 4
-        const val CANDIDATE_TIMEOUT_MS = 4_000L
+        const val CANDIDATE_TIMEOUT_MS = 3_500L
         const val STRONG_MATCH_SCORE = 0.92
         const val STRONG_TARGET_COVERAGE = 0.98
         const val STRONG_REFERENCE_COVERAGE = 0.90
